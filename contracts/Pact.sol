@@ -13,7 +13,7 @@ contract Pact is Ownable {
 
     address payable wallet;
     address host;
-    address[] participants;
+    mapping ( address => bool ) private participantMap;
     string public inviteCode;
     uint256 public id;
     RefundEscrow escrow;
@@ -25,11 +25,22 @@ contract Pact is Ownable {
         host = _host;
         id = _id;
         escrow = new RefundEscrow(wallet);
+        inviteCode = _generateInviteCode();
     }
 
     // Deposit the amount of ether sent from sender
     function sendPayment() external payable {
         escrow.deposit{value: msg.value}(wallet);
         emit Deposited(msg.sender, msg.value);
+    }
+
+    // TODO take the private key to sign it?
+    function _generateInviteCode() internal returns (string memory) {
+        return "Hello";
+    }
+
+    function addParticipant(address participant) external {
+        require(participantMap[participant], "Participant already added!");
+        participantMap[participant] = true;
     }
 }

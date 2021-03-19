@@ -43,7 +43,7 @@ contract BetterTogetherGateway is Ownable {
         return pacts[contractIndex];
     }
 
-    function compareStringsbyBytes(string memory s1, string memory s2) internal pure returns(bool){
+    function _compareStringsByBytes(string memory s1, string memory s2) internal pure returns(bool){
         return keccak256(abi.encodePacked(s1)) == keccak256(abi.encodePacked(s2));
     }
     
@@ -51,6 +51,7 @@ contract BetterTogetherGateway is Ownable {
     // Check to make sure they are not currently an originator for being better together movement
     // If they are not hosting we return the invite code for their goal
     function weAreBetterTogether() external returns (string memory) {
+        require(_originatorToEscrowIndex[msg.sender] == 0, "You already have a pact!");
         _numOfPacts.increment();
         Pact pact = new Pact(wallet, msg.sender, _numOfPacts.current());
         pacts.push(pact);
@@ -65,20 +66,17 @@ contract BetterTogetherGateway is Ownable {
     }
 
     // @dev given an invite code register the sender to that contract
-    function beBetterTogether(string memory invite, address referrer) external returns (bool) {
+    function beBetterTogether(string memory invite, address referrer) external {
         Pact pact = _getPact(referrer);
-        if (compareStringsbyBytes(pact.inviteCode(), invite)) {
-            // return false if they were given an incorrect code
-            return false;
-        }
+        require(!_compareStringsByBytes(pact.inviteCode(), invite), "You're friend gave you the wrong invite!");
         // Register the address to that escrow too here and in the contract
         _originatorToEscrowIndex[msg.sender] = pact.id();
-        // TODO Also add the address to pact
-        return true;
+        // Add the address to pact
+        pact.addParticipant(msg.sender);
     }
 
-    function getProgress() public returns (bool) {
+    // TODO check the progress
+    function getProgress() public view returns (bool) {
         return true;
     }
-
 }
