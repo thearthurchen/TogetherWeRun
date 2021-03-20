@@ -74,8 +74,8 @@ contract BetterTogetherGateway is Ownable {
         return address(pact);
     }
 
-    // @dev take the settings and check to make sure Pact hasn't started yet
-    function defineBetterness(uint256 pledge, uint64 endDate, uint64 checkpointThreshold) external {
+    // @dev take the settings
+    function setPactConditions(uint256 pledge, uint64 endDate, uint64 checkpointThreshold) external {
         Pact pact = _getPact(msg.sender);
         pact.setConditions(msg.sender, pledge, endDate, checkpointThreshold);
     }
@@ -89,7 +89,7 @@ contract BetterTogetherGateway is Ownable {
     // @dev given an invite code register the sender to that contract
     function beBetterTogether(string memory invite, address referrer) external {
         Pact pact = _getPact(referrer);
-        require(!_compareStringsByBytes(pact.inviteCode(), invite), "You're friend gave you the wrong invite!");
+        require(_compareStringsByBytes(pact.inviteCode(), invite), "You're friend gave you the wrong invite!");
         pact.makePledge();
         // Register the address to that escrow too here and in the contract
         _originatorToEscrowIndex[msg.sender] = pact.id();

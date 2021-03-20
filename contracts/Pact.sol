@@ -72,13 +72,13 @@ contract Pact is Ownable {
     }
 
     // TODO take the private key to sign it?
-    function _generateInviteCode() internal returns (string memory) {
+    function _generateInviteCode() internal view returns (string memory) {
         require(state == PactState.Pending, "Pact is already started or finished can't invite more people");
         return "Hello!!";
     }
 
     function addParticipant(address participant) external {
-        require(participantMap[participant], "Participant already added!");
+        require(!participantMap[participant], "Participant already added!");
         require(state == PactState.Pending, "You can't add anymore participants");
         participantMap[participant] = true;
     }
