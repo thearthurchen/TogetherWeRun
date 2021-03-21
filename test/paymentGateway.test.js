@@ -7,10 +7,7 @@ describe('PaymentGateway tests', function () {
     const pg = await PaymentGateway.deploy(owner.address);
 
     await pg.deployed();
-    pg.on('*', (event) => console.log(event));
-
     await pg.connect(other).sendPayment({ value: 3 });
-
     expect(await pg.balance()).to.equal(3);
   });
 });
