@@ -76,11 +76,6 @@ contract BetterTogetherGateway is Ownable {
         return pact.inviteCode();
     }
 
-    // TODO check the progress
-    function getProgress() public view returns (bool) {
-        return true;
-    }
-
     // This is just to debug stuff
     // If we invoke a method on pact, and we try to use msg.sender inside that method
     // The msg.sender is not the person who c alled this method from the gateway

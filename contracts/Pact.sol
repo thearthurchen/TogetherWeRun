@@ -9,8 +9,8 @@ contract Pact is AccessControl {
     using SafeMath for uint256;
     using SafeMath for uint64;
 
-    // Pact can only be Pending, InProgress, or Finished
-    enum PactState { Pending, InProgress, Finished }
+    // Pact can only be Pending, Started, or Finished
+    enum PactState { Pending, Started, Finished }
     // Roles
     bytes32 public constant HOST_ROLE = keccak256("HOST_ROLE");
     bytes32 public constant FRIEND_ROLE = keccak256("FRIEND_ROLE");
@@ -26,6 +26,7 @@ contract Pact is AccessControl {
     address public host;
     // Mapping of the participants in this Pact
     mapping ( address => bool ) private participantMap;
+    address[] public participants;
     // Unique inviteCode for this Pact
     string public inviteCode;
     // Id of the Pact
@@ -77,11 +78,11 @@ contract Pact is AccessControl {
     // Deposit the amount of ether sent from sender
     function makePledge() external payable {
         require(state == PactState.Pending, "Pact is not allowing anymore pledges!");
+        require(hasRole(FRIEND_ROLE, msg.sender), "Caller is not a friend");
         // Make sure that they have enough to pledge
         require(msg.sender.balance > 0, "This should work?");
         require(msg.sender.balance >= pledge, "You need to pledge a bit more to be better together");
         // Deposit into our escrow
-//        escrow.deposit{value: pledge}(wallet);
         escrow.deposit{value: msg.value}(wallet);
         emit Deposited(msg.sender, msg.value);
     }
@@ -97,22 +98,48 @@ contract Pact is AccessControl {
         // Checks to make sure Pact is in good state and the caller is calling the right Pact
         require(!participantMap[msg.sender], "Participant already added!");
         require(state == PactState.Pending, "You can't add anymore participants");
-        require(host == _host, "You have the wrong host and invite code");
-        require(_compareStringsByBytes(inviteCode, _inviteCode), "You're friend gave you the wrong invite!");
+        require(host == _host && _compareStringsByBytes(inviteCode, _inviteCode), "You have the wrong host and invite code");
         participantMap[msg.sender] = true;
+        participants.push(msg.sender);
         // Give the participant FRIEND_ROLE
         _setupRole(FRIEND_ROLE, msg.sender);
     }
 
-    function getHost() public view returns (address) {
+    // @dev get who the host is for this pact
+    function getHost() external view returns (address) {
+        require(hasRole(FRIEND_ROLE, msg.sender) || hasRole(HOST_ROLE, msg.sender), "You are not part of the pact");
         return host;
     }
 
-    function getMyBalance() public view returns (uint256, uint256, uint256) {
+    // TODO DEBUG REMOVE THIS LATER
+    function getMyBalance() external view returns (uint256, uint256, uint256) {
         return (msg.sender.balance, pledge, address(escrow).balance);
     }
 
-    function foo(address user) public view returns (address, address, address) {
+    // TODO DEBUG REMOVE THIS LATER
+    function foo(address user) external view returns (address, address, address) {
         return (msg.sender, user, host);
+    }
+
+    // @dev Not sure if there's a more optimal way of getting the participants
+    // EVM doesn't support iterating over a map
+    // It's also expensive to iterate a list to check if an element exists
+    function getParticipants() external view returns (address[] memory) {
+        require(hasRole(FRIEND_ROLE, msg.sender) || hasRole(HOST_ROLE, msg.sender), "You are not part of the pact");
+        return participants;
+    }
+
+    // TODO check the progress
+    function getProgress() external view returns (bool) {
+        return true;
+    }
+
+    function isPactComplete() external view returns (bool) {
+        return false;
+    }
+
+    function startPact() external {
+        require(hasRole(HOST_ROLE, msg.sender), "You must be the host");
+        state = PactState.Started;
     }
 }

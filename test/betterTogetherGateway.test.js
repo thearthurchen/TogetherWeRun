@@ -1,10 +1,11 @@
 const { expect } = require('chai');
 
 const EVM_ERROR = 'Error: VM Exception while processing transaction: revert';
-
 const ALREADY_HAVE_PACT_ERROR = `${EVM_ERROR} You already have a pact!`;
-
 const YOU_CANT_CHANGE_PACT_ERROR = `${EVM_ERROR} Caller is not a host`;
+const WRONG_HOST_OR_INVITE = `${EVM_ERROR} You have the wrong host and invite code`;
+const NOT_A_FRIEND = `${EVM_ERROR} Caller is not a friend`;
+const NOT_IN_PACT = `${EVM_ERROR} You are not part of the pact`;
 
 describe('BetterTogetherGateway', function () {
   // Network specific
@@ -88,7 +89,10 @@ describe('BetterTogetherGateway', function () {
         await pact.connect(friend).joinPact(host.address, inviteCode);
       })
     );
-    // TODO check participants
+    // We expect 4 participants
+    const participants = await pact.connect(host).getParticipants();
+    console.log(participants);
+    expect(participants).to.be.length(4);
     // None of my amazing friends should be able to set the conditions
     const errors = [];
     await Promise.all(
@@ -133,5 +137,75 @@ describe('BetterTogetherGateway', function () {
     console.log(ethers.BigNumber.from(nb).toString());
     // Check that balanced has decreased by that much
     expect(newBalance).to.equal(currentBalance);
+  });
+});
+
+describe('Access Control', function () {
+  // Network specific
+  let provider;
+
+  // Contract specific
+  let owner;
+  let host;
+  let friend1;
+  let friend2;
+  let friend3;
+  let friend4;
+  let BetterTogetherGateway;
+  let gateway;
+  let allMyFriends = [];
+
+  let pact;
+
+  beforeEach(async function () {
+    // Set default provider
+    provider = await ethers.getDefaultProvider();
+    // Get signers
+    [owner, host, friend1, friend2, friend3, friend4] = await ethers.getSigners();
+    allMyFriends = [friend1, friend2, friend3, friend4];
+    // Deploy gateway
+    BetterTogetherGateway = await ethers.getContractFactory('BetterTogetherGateway');
+    gateway = await BetterTogetherGateway.deploy(owner.address);
+    // Wait for gateway deployed
+    await gateway.deployed();
+    // Create a Pact
+    await gateway.connect(host).weAreBetterTogether();
+    // Set the pact for our tests
+    const pactAddress = await gateway.connect(host).getMyPact();
+    const Pact = await ethers.getContractFactory('Pact');
+    pact = await Pact.attach(pactAddress);
+  });
+
+  it('Should reject on non-friends making pledges', async function () {
+    try {
+      await pact.connect(friend1).joinPact(host.address, 'Hello');
+      await pact.connect(friend1).makePledge({ value: 10 });
+    } catch (e) {
+      expect(e.toString()).to.equal(NOT_A_FRIEND);
+    }
+  });
+
+  it('Should reject bad invite code', async function () {
+    try {
+      await pact.connect(friend1).joinPact(host.address, 'Not Correct');
+    } catch (e) {
+      expect(e.toString()).to.equal(WRONG_HOST_OR_INVITE);
+    }
+  });
+
+  it('Should reject bad host with proper invite code', async function () {
+    try {
+      await pact.connect(friend1).joinPact(friend2.address, 'Hello');
+    } catch (e) {
+      expect(e.toString()).to.equal(WRONG_HOST_OR_INVITE);
+    }
+  });
+
+  it('Should reject viewing participants to outsiders', async function () {
+    try {
+      await pact.connect(friend1).getParticipants();
+    } catch (e) {
+      expect(e.toString()).to.equal(NOT_IN_PACT);
+    }
   });
 });
