@@ -76,6 +76,8 @@ contract Pact is AccessControl, ChainlinkClient {
          *
          * AlarmClock
          * JobID: a7ab70d561d34eb49e9b1612fd2e044b
+         * TODO we need to move this out and use this pattern
+         * https://github.com/tweether-protocol/tweether/blob/master/contracts/Tweether.sol#L69
          */
         setPublicChainlinkToken();
         oracle = 0x2f90A6D021db21e1B2A077c5a37B3C7E75D15b7e;

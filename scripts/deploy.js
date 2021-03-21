@@ -1,19 +1,19 @@
-async function main() {
+async function main () {
   // Get an account note this is an object; maybe we should use TS
   // https://github.com/ethers-io/ethers.js/issues/1051
   // You need to pass the address of the accounts
-  const accounts = await ethers.getSigners();
+  const accounts = await ethers.getSigners()
 
   // We get the contract to deploy
-  const PaymentGateway = await ethers.getContractFactory('PaymentGateway');
-  const paymentGateway = await PaymentGateway.deploy(accounts[0].address);
+  const PaymentGateway = await ethers.getContractFactory('PaymentGateway')
+  const paymentGateway = await PaymentGateway.deploy(accounts[0].address)
 
-  console.log('PaymentGateway deployed to:', paymentGateway.address);
+  console.log('PaymentGateway deployed to:', paymentGateway.address)
 }
 
 main()
   .then(() => process.exit(0))
   .catch((error) => {
-    console.error(error);
-    process.exit(1);
-  });
+    console.error(error)
+    process.exit(1)
+  })
