@@ -176,6 +176,8 @@ describe('Access Control', function () {
     pact = await Pact.attach(pactAddress);
   });
 
+  // TODO can chai catch exceptions (can't be bothered to look at api right now)
+  // TODO Try-Catch will create false positive test cases if we never throw
   it('Should reject on non-friends making pledges', async function () {
     try {
       await pact.connect(friend1).joinPact(host.address, 'Hello');

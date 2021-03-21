@@ -4,8 +4,10 @@ pragma solidity ^0.6.12;
 
 import '@openzeppelin/contracts/access/AccessControl.sol';
 import '@openzeppelin/contracts/payment/escrow/RefundEscrow.sol';
+import "@chainlink/contracts/src/v0.6/ChainlinkClient.sol";
 
-contract Pact is AccessControl {
+
+contract Pact is AccessControl, ChainlinkClient {
     using SafeMath for uint256;
     using SafeMath for uint64;
 
@@ -37,6 +39,13 @@ contract Pact is AccessControl {
     // The state of current Pact
     PactState state;
 
+    // Chainlink Stuff
+    address private oracle;
+    bytes32 private externalAdapterJobId;
+    bytes32 private alarmClockJobId;
+    uint256 private externalAdapterFee;
+    uint256 private alarmClockFee;
+
     // Conditions for the Pact, maybe we can make it a struct
     uint256 pledge;
     uint64 endDate;
@@ -45,15 +54,35 @@ contract Pact is AccessControl {
     // @dev borrowed from
     // https://medium.com/@ethdapp/using-the-openzeppelin-escrow-library-6384f22caa99
     constructor(address payable _wallet, address _host, uint256 _id) public {
+        // Set the params we need for this Pact
         wallet = _wallet;
         host = _host;
         id = _id;
+        // We use a refund escrow wallet should actually be the charity
         escrow = new RefundEscrow(wallet);
+        // TODO We need to fix invite code generation
         inviteCode = _generateInviteCode();
         inviteCode = "Hello";
+        // Pact is Pending by default
         state = PactState.Pending;
         // Grant the host HOST_ROLE
         _setupRole(HOST_ROLE, _host);
+        /**
+         * ExternalAdapter
+         * Network: Kovan
+         * Oracle: 0x2f90A6D021db21e1B2A077c5a37B3C7E75D15b7e
+         * Job ID: 29fa9aa13bf1468788b7cc4a500a45b8
+         * Fee: 0.1 LINK
+         *
+         * AlarmClock
+         * JobID: a7ab70d561d34eb49e9b1612fd2e044b
+         */
+        setPublicChainlinkToken();
+        oracle = 0x2f90A6D021db21e1B2A077c5a37B3C7E75D15b7e;
+        externalAdapterJobId = "29fa9aa13bf1468788b7cc4a500a45b8";
+        alarmClockJobId = "a7ab70d561d34eb49e9b1612fd2e044b";
+        externalAdapterFee = 0.1 * 10 ** 18; // 0.1 LINK
+        alarmClockFee = 1 * 10 ** 18; // 1 LINK
     }
 
     function _compareStringsByBytes(string memory s1, string memory s2) internal pure returns(bool){
@@ -135,13 +164,77 @@ contract Pact is AccessControl {
         return true;
     }
 
-    // We want to check whether or not
+    // Is the pact complete
     function isPactComplete() external view returns (bool) {
-        return false;
+        return state == PactState.Finished;
     }
 
     function startPact() external {
         require(hasRole(HOST_ROLE, msg.sender), "You must be the host");
         state = PactState.Started;
+    }
+
+    /**
+     * @dev
+     * Create a Chainlink request to retrieve API response, find the target
+     * data, then multiply by 1000000000000000000 (to remove decimal places from data).
+     */
+    function requestStravaData() internal returns (bytes32 requestId)
+    {
+        Chainlink.Request memory req = buildChainlinkRequest(externalAdapterJobId, address(this), this.fulfillStravaResponse.selector);
+
+        // Set the URL to perform the GET request on
+        req.add("get", "https://min-api.cryptocompare.com/data/pricemultifull?fsyms=ETH&tsyms=USD");
+
+        // Set the path to find the desired data in the API response, where the response format is:
+        // {"RAW":
+        //   {"ETH":
+        //    {"USD":
+        //     {
+        //      "VOLUME24HOUR": xxx.xxx,
+        //     }
+        //    }
+        //   }
+        //  }
+        req.add("path", "RAW.ETH.USD.VOLUME24HOUR");
+
+        // Multiply the result by 1000000000000000000 to remove decimals
+        int timesAmount = 10**18;
+        req.addInt("times", timesAmount);
+
+        // Sends the request
+        return sendChainlinkRequestTo(oracle, req, externalAdapterFee);
+    }
+
+    /**
+     * @dev
+     * Receive the response in the form of uint256
+     */
+    function fulfillStravaResponse(bytes32 _requestId, uint256 _volume) public recordChainlinkFulfillment(_requestId)
+    {
+
+    }
+
+    /**
+     * @dev
+     * Ghetto cron job
+     * We just request everyday X times until we reach the end based on endDate
+     */
+    function cronJob() internal {
+        // TODO make this a for-loop for N amount of days til endDate
+
+        // TODO probably want a mapping also for each request sent which is a bytes32 requestId
+        Chainlink.Request memory req = buildChainlinkRequest(alarmClockJobId, address(this), this.fulfillCronJob.selector);
+        req.addUint("until", now + 5 minutes);
+        sendChainlinkRequestTo(oracle, req, alarmClockFee);
+    }
+
+    /**
+     * @dev
+     * Receive the response in the form of uint256
+     */
+    function fulfillCronJob(bytes32 _requestId) public recordChainlinkFulfillment(_requestId)
+    {
+        // TODO probably want to track each requestId that we get and mark them as fulfilled
     }
 }
