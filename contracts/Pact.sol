@@ -15,11 +15,12 @@ contract Pact is AccessControl {
     bytes32 public constant HOST_ROLE = keccak256("HOST_ROLE");
     bytes32 public constant FRIEND_ROLE = keccak256("FRIEND_ROLE");
 
-    // Track events
-    event Deposited(
-        address indexed _from,
-        uint _value
-    );
+    // Events to listen to if we so choose to
+    event Deposited(address indexed from, uint value);
+    event FriendJoined(address indexed friend);
+//    event ProgressUpdated();
+    event PactStatusChanged(PactState state);
+
     // Wallet of the host
     address payable wallet;
     // Hosting address of person who started this pact
@@ -134,6 +135,7 @@ contract Pact is AccessControl {
         return true;
     }
 
+    // We want to check whether or not
     function isPactComplete() external view returns (bool) {
         return false;
     }
