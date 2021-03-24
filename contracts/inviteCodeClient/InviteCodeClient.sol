@@ -3,10 +3,10 @@ pragma solidity ^0.6.12;
 
 import "@chainlink/contracts/src/v0.6/VRFConsumerBase.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import '@openzeppelin/contracts/access/Ownable.sol';
+import "@openzeppelin/contracts/access/Ownable.sol";
 
 
-contract InviteGenerator is Ownable, VRFConsumerBase {
+contract InviteCodeClient is Ownable, VRFConsumerBase {
 
     bytes32 internal keyHash;
     uint256 internal fee;
@@ -59,7 +59,7 @@ contract InviteGenerator is Ownable, VRFConsumerBase {
     }
 
     // @dev get addressToInviteCode for the msg.sender if they've requested before
-    function getInviteCode() external view returns (bytes2) {
+    function getInviteCode() public view returns (bytes2) {
         require(addressToInviteCode[msg.sender] != bytes2(0), "Couldn't find result based on sender address");
         return addressToInviteCode[msg.sender];
     }

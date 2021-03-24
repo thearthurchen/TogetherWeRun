@@ -5,7 +5,7 @@ import "@chainlink/contracts/src/v0.6/ChainlinkClient.sol";
 import '@openzeppelin/contracts/access/AccessControl.sol';
 import '@openzeppelin/contracts/payment/escrow/RefundEscrow.sol';
 
-contract Pact is AccessControl {
+contract Pact is Ownable, AccessControl {
     using SafeMath for uint256;
     using SafeMath for uint64;
 
@@ -130,7 +130,7 @@ contract Pact is AccessControl {
         // Checks to make sure Pact is in good state and the caller is calling the right Pact
         require(!participantMap[msg.sender], "Participant already added!");
         require(state == PactState.Pending, "You can't add anymore participants");
-        require(host == _host && _compareStringsByBytes(inviteCode, _inviteCode), "You have the wrong host and invite code");
+        require(host == _host && _compareStringsByBytes(inviteCode, _inviteCode), "Invalid host or code");
         participantMap[msg.sender] = true;
         participants.push(msg.sender);
         // Give the participant FRIEND_ROLE
@@ -179,6 +179,16 @@ contract Pact is AccessControl {
     function startPact() external {
         require(hasRole(HOST_ROLE, msg.sender), "You must be the host");
         state = PactState.Started;
+    }
+
+    // This would probably call the StravaClient to update the progress
+    // For all the participants
+    function updateProgress() external {
+
+    }
+
+    function setFinished() public onlyOwner {
+        state = PactState.Finished;
     }
 
 

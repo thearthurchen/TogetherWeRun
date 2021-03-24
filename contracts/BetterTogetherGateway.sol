@@ -2,11 +2,14 @@
 pragma solidity ^0.6.12;
 
 
-import '@openzeppelin/contracts/access/Ownable.sol';
+import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
-import '@openzeppelin/contracts/math/SafeMath.sol';
-import '@openzeppelin/contracts/payment/escrow/RefundEscrow.sol';
-import './Pact.sol';
+import "@openzeppelin/contracts/math/SafeMath.sol";
+import "@openzeppelin/contracts/payment/escrow/RefundEscrow.sol";
+import "./Pact.sol";
+import "./stravaClient/IStravaClient.sol";
+import "./inviteCodeClient/IInviteCodeClient.sol";
+import "./alarmClient/IAlarmClient.sol";
 
 
 contract BetterTogetherGateway is Ownable {
@@ -30,6 +33,11 @@ contract BetterTogetherGateway is Ownable {
     // @dev Wallet to hold all the money for these pacts
     // This is probably cheaper than deploying an actual contract
     address payable wallet;
+
+    // Client's that we'll inject into our Pact
+    IStravaClient stravaClient;
+    IInviteCodeClient inviteCodeClient;
+    IAlarmClient alarmClient;
 
     // @dev borrowed from
     // https://medium.com/@ethdapp/using-the-openzeppelin-escrow-library-6384f22caa99
