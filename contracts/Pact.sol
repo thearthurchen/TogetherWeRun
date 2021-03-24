@@ -1,13 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.6.12;
 
-
+import "@chainlink/contracts/src/v0.6/ChainlinkClient.sol";
 import '@openzeppelin/contracts/access/AccessControl.sol';
 import '@openzeppelin/contracts/payment/escrow/RefundEscrow.sol';
-import "@chainlink/contracts/src/v0.6/ChainlinkClient.sol";
 
-
-contract Pact is AccessControl, ChainlinkClient {
+contract Pact is AccessControl {
     using SafeMath for uint256;
     using SafeMath for uint64;
 
@@ -51,6 +49,10 @@ contract Pact is AccessControl, ChainlinkClient {
     uint64 endDate;
     uint64 checkpointThreshold;
 
+    struct BloodPact {
+        mapping ( address => mapping ( uint64 => uint8 ) ) progress;
+    }
+
     // @dev borrowed from
     // https://medium.com/@ethdapp/using-the-openzeppelin-escrow-library-6384f22caa99
     constructor(address payable _wallet, address _host, uint256 _id) public {
@@ -79,8 +81,6 @@ contract Pact is AccessControl, ChainlinkClient {
          * TODO we need to move this out and use this pattern
          * https://github.com/tweether-protocol/tweether/blob/master/contracts/Tweether.sol#L69
          */
-        setPublicChainlinkToken();
-        oracle = 0x2f90A6D021db21e1B2A077c5a37B3C7E75D15b7e;
         externalAdapterJobId = "29fa9aa13bf1468788b7cc4a500a45b8";
         alarmClockJobId = "a7ab70d561d34eb49e9b1612fd2e044b";
         externalAdapterFee = 0.1 * 10 ** 18; // 0.1 LINK
@@ -126,7 +126,7 @@ contract Pact is AccessControl, ChainlinkClient {
     }
 
     // Make sure that they have the right invite code
-    function joinPact(address _host, string memory _inviteCode) external {
+    function joinPact(address _host, string memory _inviteCode) external payable {
         // Checks to make sure Pact is in good state and the caller is calling the right Pact
         require(!participantMap[msg.sender], "Participant already added!");
         require(state == PactState.Pending, "You can't add anymore participants");
@@ -135,6 +135,11 @@ contract Pact is AccessControl, ChainlinkClient {
         participants.push(msg.sender);
         // Give the participant FRIEND_ROLE
         _setupRole(FRIEND_ROLE, msg.sender);
+        // TAKE THEIR MONEY
+        require(msg.sender.balance >= pledge, "You need to pledge a bit more to be better together");
+        // Deposit into our escrow
+        escrow.deposit{value: msg.value}(wallet);
+        emit Deposited(msg.sender, msg.value);
     }
 
     // @dev get who the host is for this pact
@@ -176,67 +181,8 @@ contract Pact is AccessControl, ChainlinkClient {
         state = PactState.Started;
     }
 
-    /**
-     * @dev
-     * Create a Chainlink request to retrieve API response, find the target
-     * data, then multiply by 1000000000000000000 (to remove decimal places from data).
-     */
-    function requestStravaData() internal returns (bytes32 requestId)
-    {
-        Chainlink.Request memory req = buildChainlinkRequest(externalAdapterJobId, address(this), this.fulfillStravaResponse.selector);
 
-        // Set the URL to perform the GET request on
-        req.add("get", "https://min-api.cryptocompare.com/data/pricemultifull?fsyms=ETH&tsyms=USD");
 
-        // Set the path to find the desired data in the API response, where the response format is:
-        // {"RAW":
-        //   {"ETH":
-        //    {"USD":
-        //     {
-        //      "VOLUME24HOUR": xxx.xxx,
-        //     }
-        //    }
-        //   }
-        //  }
-        req.add("path", "RAW.ETH.USD.VOLUME24HOUR");
 
-        // Multiply the result by 1000000000000000000 to remove decimals
-        int timesAmount = 10**18;
-        req.addInt("times", timesAmount);
 
-        // Sends the request
-        return sendChainlinkRequestTo(oracle, req, externalAdapterFee);
-    }
-
-    /**
-     * @dev
-     * Receive the response in the form of uint256
-     */
-    function fulfillStravaResponse(bytes32 _requestId, uint256 _volume) public recordChainlinkFulfillment(_requestId)
-    {
-
-    }
-
-    /**
-     * @dev
-     * Ghetto cron job
-     * We just request everyday X times until we reach the end based on endDate
-     */
-    function cronJob() internal {
-        // TODO make this a for-loop for N amount of days til endDate
-
-        // TODO probably want a mapping also for each request sent which is a bytes32 requestId
-        Chainlink.Request memory req = buildChainlinkRequest(alarmClockJobId, address(this), this.fulfillCronJob.selector);
-        req.addUint("until", now + 5 minutes);
-        sendChainlinkRequestTo(oracle, req, alarmClockFee);
-    }
-
-    /**
-     * @dev
-     * Receive the response in the form of uint256
-     */
-    function fulfillCronJob(bytes32 _requestId) public recordChainlinkFulfillment(_requestId)
-    {
-        // TODO probably want to track each requestId that we get and mark them as fulfilled
-    }
 }
