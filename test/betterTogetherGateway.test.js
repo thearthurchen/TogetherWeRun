@@ -40,9 +40,9 @@ describe('BetterTogetherGateway', function () {
 
   it('Should only be able to create once per sender and get invite code', async function () {
     // Create a Better Together
-    await gateway.weAreBetterTogether()
+    await gateway.createPact()
     try {
-      await gateway.weAreBetterTogether()
+      await gateway.createPact()
     } catch (e) {
       expect(e.toString()).to.equal(ALREADY_HAVE_PACT_ERROR)
     }
@@ -54,7 +54,7 @@ describe('BetterTogetherGateway', function () {
 
   it('Should be able to have set pact conditions if owner', async function () {
     // Create a Better Together
-    await gateway.connect(friend4).weAreBetterTogether()
+    await gateway.connect(friend4).createPact()
     // Get the Pact
     const pactAddress = await gateway.connect(friend4).getMyPact()
     const Pact = await ethers.getContractFactory('Pact')
@@ -74,7 +74,7 @@ describe('BetterTogetherGateway', function () {
 
   it('Should be able to invite others to pact and they cant change conditions', async function () {
     // Create a Better Together
-    await gateway.connect(host).weAreBetterTogether()
+    await gateway.connect(host).createPact()
     const [inviteCode, pactAddress] = await Promise.all([
       gateway.connect(host).getInviteCode(),
       gateway.connect(host).getMyPact()
@@ -111,7 +111,7 @@ describe('BetterTogetherGateway', function () {
 
   it('Should withdraw from friend accounts if they make a pledge', async function () {
     // Create a Better Together
-    await gateway.connect(host).weAreBetterTogether()
+    await gateway.connect(host).createPact()
     // We get the inviteCode and address of pact and create new instance to contract
     const [inviteCode, pactAddress] = await Promise.all([
       gateway.connect(host).getInviteCode(),
@@ -168,7 +168,7 @@ describe('Access Control', function () {
     // Wait for gateway deployed
     await gateway.deployed()
     // Create a Pact
-    await gateway.connect(host).weAreBetterTogether()
+    await gateway.connect(host).createPact()
     // Set the pact for our tests
     const pactAddress = await gateway.connect(host).getMyPact()
     const Pact = await ethers.getContractFactory('Pact')
