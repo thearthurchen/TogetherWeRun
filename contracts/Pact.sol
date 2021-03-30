@@ -51,20 +51,16 @@ contract Pact is Ownable, AccessControl {
     IStravaClient stravaClient;
 
     // Constants
-    uint64 SECONDS_IN_A_DAY = 86400;
+    uint256 SECONDS_IN_A_DAY = 86400;
 
-    struct Goal {
-        mapping ( address => mapping ( uint64 => uint256 ) ) timeToProgressIndex;
-        mapping ( address => uint8[] ) progress;
-        mapping ( address => Counters.Counter ) indexes;
-        uint256 minPledge;
-        Counters.Counter daysUntilEnd;
-        uint64 startDateUtc;
-        uint64 endDateUtc;
-        uint64 daysPerCheck;
-    }
-
-    Goal goal;
+    mapping ( address => mapping ( uint256 => uint256 ) ) timeToProgressIndex;
+    mapping ( address => uint8[] ) progress;
+    mapping ( address => Counters.Counter ) indexes;
+    uint256 minPledge;
+    Counters.Counter daysUntilEnd;
+    uint256 startDateUtc;
+    uint256 endDateUtc;
+    uint256 daysPerCheck;
 
     // @dev borrowed from
     // https://medium.com/@ethdapp/using-the-openzeppelin-escrow-library-6384f22caa99
@@ -96,43 +92,36 @@ contract Pact is Ownable, AccessControl {
         stravaClient = IStravaClient(_stravaAddress);
         alarmAddress = _alarmAddress;
         stravaAddress = _stravaAddress;
-
-        // The Goal
-        mapping ( address => mapping ( uint64 => uint256 ) ) storage _indexProgress;
-        mapping ( address => uint8[] ) storage _progress;
-        mapping ( address => Counters.Counter ) storage _indexes;
-        Counters.Counter storage daysUntilEnd;
-        goal = Goal(_indexProgress, _progress, _indexes, 0, daysUntilEnd, 0, 0, 0);
     }
 
     function _compareStringsByBytes(string memory s1, string memory s2) internal pure returns(bool) {
         return keccak256(abi.encodePacked(s1)) == keccak256(abi.encodePacked(s2));
     }
 
-    function _floorToStartOfDay(uint64 timestamp) internal view returns (uint64) {
-        return uint64(timestamp/SECONDS_IN_A_DAY) * SECONDS_IN_A_DAY;
+    function _floorToStartOfDay(uint256 timestamp) internal view returns (uint256) {
+        return uint256(timestamp/SECONDS_IN_A_DAY) * SECONDS_IN_A_DAY;
     }
 
-    function _getDaysBetween(uint64 start, uint64 end) internal view returns (uint64) {
+    function _getDaysBetween(uint256 start, uint256 end) internal view returns (uint256) {
         require(end > start, "End is before start");
-        uint64 diff  = end - start;
+        uint256 diff  = end - start;
         return diff / SECONDS_IN_A_DAY;
     }
 
     // @dev setter and getter for conditions
-    function setConditions(uint256 minPledge, uint64 endDateUtc, uint64 daysPerCheck) external {
+    function setConditions(uint256 _minPledge, uint64 _endDateUtc, uint64 _daysPerCheck) external {
         // Check that we haven't started the Pact
         require(state == PactState.Pending, "Pact is not allowing anymore pledges!");
         // Check that the caller is the actual host
         require(hasRole(HOST_ROLE, msg.sender), "Caller is not a host");
         // Set the desired conditions
-        goal.minPledge = minPledge;
-        goal.endDateUtc = endDateUtc;
-        goal.daysPerCheck = daysPerCheck;
+        minPledge = _minPledge;
+        endDateUtc = _endDateUtc;
+        daysPerCheck = _daysPerCheck;
     }
 
-    function getConditions() external view returns (uint256, uint64, uint64) {
-        return (goal.minPledge, goal.endDateUtc, goal.daysPerCheck);
+    function getConditions() external view returns (uint256, uint256, uint256) {
+        return (minPledge, endDateUtc, daysPerCheck);
     }
 
     // Deposit the amount of ether sent from sender
@@ -143,7 +132,7 @@ contract Pact is Ownable, AccessControl {
         // Make sure that they have enough to pledge
         require(msg.sender.balance > 0, "This should work?");
         // TODO this is probably not right we only care if the msg.value is >= pledge
-        require(msg.sender.balance >= goal.minPledge, "You need to pledge a bit more to be better together");
+        require(msg.sender.balance >= minPledge, "You need to pledge a bit more to be better together");
         // Deposit into our escrow
         escrow.deposit{value: msg.value}(wallet);
         emit Deposited(msg.sender, msg.value);
@@ -168,7 +157,7 @@ contract Pact is Ownable, AccessControl {
         // Give the participant FRIEND_ROLE
         _setupRole(FRIEND_ROLE, msg.sender);
         // TAKE THEIR MONEY
-        require(msg.sender.balance >= goal.minPledge, "You need to pledge a bit more to be better together");
+        require(msg.sender.balance >= minPledge, "You need to pledge a bit more to be better together");
         // Deposit into our escrow
         escrow.deposit{value: msg.value}(wallet);
         emit Deposited(msg.sender, msg.value);
@@ -177,13 +166,13 @@ contract Pact is Ownable, AccessControl {
     // HOW DO DEFAULT WORKS WITH COUNTERS AND STUFF
     function testAddingStruct()  external {
         // ADD THEM TO THE GOAL
-        require(goal.progress[msg.sender].length == 0, "You already got added somehow");
+        require(progress[msg.sender].length == 0, "You already got added somehow");
         // Create some fake progress
-        goal.progress[msg.sender].push(0);
+        progress[msg.sender].push(0);
         // Set current block.timestamp to index current ie. 0 because we just added
-        goal.timeToProgressIndex[msg.sender][0] = goal.indexes[msg.sender].current();
+        timeToProgressIndex[msg.sender][0] = indexes[msg.sender].current();
         // Increment counter
-        goal.indexes[msg.sender].increment();
+        indexes[msg.sender].increment();
     }
 
     // @dev get who the host is for this pact
@@ -200,10 +189,10 @@ contract Pact is Ownable, AccessControl {
         return participants;
     }
 
-    // Returns the whole struct of goal back???
-    function getProgress() external view returns (Goal memory) {
-        return goal;
-    }
+//    // Returns the whole struct of goal back???
+//    function getProgress() external view returns (Goal memory) {
+//        return goal;
+//    }
 
     // Is the pact complete
     function isPactComplete() external view returns (bool) {
@@ -214,14 +203,14 @@ contract Pact is Ownable, AccessControl {
         require(hasRole(HOST_ROLE, msg.sender), "You must be the host");
         // Escrow is Active on creation
         // State must be Refund or Closed for any refund or beneficiary withdrawal
-        alarmClient.setAlarm(address(this), goal.endDateUtc);
+        alarmClient.setAlarm(address(this), endDateUtc);
         state = PactState.Started;
         // Set the number of days left in goal
-        goal.startDateUtc = block.timestamp;
+        startDateUtc = block.timestamp;
         // TODO Too tired to think about inclusive endDate or not
         // Note: This is probably not ok to access _value directly
         // But I don't want to write my own Counter struct right now
-        goal.daysUntilEnd._value = _getDaysBetween(block.timestamp, goal.endDateUtc);
+        daysUntilEnd._value = _getDaysBetween(block.timestamp, endDateUtc);
     }
 
     // This would probably call the StravaClient to update the progress
@@ -231,28 +220,28 @@ contract Pact is Ownable, AccessControl {
         require(hasRole(FRIEND_ROLE, msg.sender), "You are not part of the pact");
         // Request Strava Data on behalf of the user
         // TODO we will request StravaData within Pact as it is also StravaClient?
-        stravaClient.requestStravaData(msg.sender, block.timestamp);
+        stravaClient.requestStravaData(msg.sender, uint64(block.timestamp));
     }
 
     function _updateProgress(address user, uint timestamp, uint8 distance) internal {
-        require(goal.indexes[user] > 0, "You were not initialized somehow");
+        require(indexes[user].current() > 0, "You were not initialized somehow");
         require(timestamp > 0, "Can't use zero timestamp");
         // We floor the timestamp to the start of day so that multiple updates
         // will just update old value
         // We could also make sure that people don't try to update more than X times a day?
-        uint64 theDay = _floorToStartOfDay(timestamp);
+        uint256 theDay = _floorToStartOfDay(timestamp);
         // Check if the value exists already in our timeToProgressIndex
-        uint256 index = goal.timeToProgressIndex[user][theDay];
+        uint256 index = timeToProgressIndex[user][theDay];
         // If it does exist (ie. not 0) we simply update with the new distance
         if (index > 0 ) {
-            goal.progress[index] = distance;
+            progress[user][index] = distance;
         } else {
             // Add the distance to the progress array
-            goal.progress[user].push(distance);
+            progress[user].push(distance);
             // Record which index it is based on timestamp
-            goal.timeToProgressIndex[user][theDay] = goal.indexes[user].current();
+            timeToProgressIndex[user][theDay] = indexes[user].current();
             // Increment the counter
-            goal.indexes[user].increment();
+            indexes[user].increment();
         }
     }
 
@@ -265,8 +254,8 @@ contract Pact is Ownable, AccessControl {
     }
 
     // Make sure that the goal is complete for each participant
-    function _checkComplete() internal {
-
+    function _checkComplete() internal returns (bool) {
+        return false;
     }
 
     // Alarm clock calls this
@@ -301,7 +290,7 @@ contract Pact is Ownable, AccessControl {
 
     // TODO DEBUG REMOVE THIS LATER
     function getMyBalance() external view returns (uint256, uint256, uint256) {
-        return (msg.sender.balance, goal.minPledge, address(escrow).balance);
+        return (msg.sender.balance, minPledge, address(escrow).balance);
     }
 
     // TODO DEBUG REMOVE THIS LATER

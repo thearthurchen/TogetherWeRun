@@ -36,7 +36,7 @@ contract StravaClient is Ownable, ChainlinkClient {
      * Create a Chainlink request to retrieve API response, find the target
      * data, then multiply by 1000000000000000000 (to remove decimal places from data).
      */
-    function requestStravaData(address user) external returns (bytes32 requestId)
+    function requestStravaData(address user, uint timestamp) external returns (bytes32 requestId)
     {
         // TODO Request strava data for address user, the msg.sender is the Pact
         Chainlink.Request memory req = buildChainlinkRequest(jobId, address(this), this.fulfill.selector);

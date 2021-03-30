@@ -43,7 +43,8 @@ contract BetterTogetherGateway is Ownable {
             msg.sender,
             _numOfPacts.current(),
             _alarmAddress,
-            _stravaAddress
+            _stravaAddress,
+            ""
         );
         pacts.push(dummy);
         _numOfPacts.increment();
