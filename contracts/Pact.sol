@@ -51,15 +51,16 @@ contract Pact is Ownable, AccessControl {
 
     struct Goal {
         mapping ( address => mapping ( uint64 => uint8[] ) ) progress;
-        uint256 pledge;
+        uint256 minPledge;
         uint64 endDate;
         uint64 checkpointThreshold;
     }
 
     // @dev borrowed from
     // https://medium.com/@ethdapp/using-the-openzeppelin-escrow-library-6384f22caa99
+    // Transfer ownership of the escrow to charity
     constructor(
-        address payable _wallet,
+        address payable _wallet, // do we want this to be beneficiary?
         address _host,
         uint256 _id,
         address _stravaAddress,
@@ -179,17 +180,37 @@ contract Pact is Ownable, AccessControl {
     // This would probably call the StravaClient to update the progress
     // For all the participants
     function updateProgress() external {
+        // msg.sender requests progress
 
+    }
+
+    // Make sure that the goal is complete for each participant
+    function _checkComplete() internal {
+
+    }
+
+    // Alarm clock calls this
+    function _enableRefunds() internal {
+        // Make sure that the goal is complete?
+        // Call the necessary escrow methods to enable refunds or lock it
+        // enableRefunds() or close()
     }
 
     // This will be called by AlarmClock
     // BetterTogetherGateway is the owner which will call into this
-    function setFinished() public {
+    function finishPact() public {
         // Make sure that its the right AlarmClock
         require(msg.sender == alarmAddress, "You are not the AlarmClock");
         // TODO calculate differences
+        bool complete = _checkComplete();
         // Set state to finished
         state = PactState.Finished;
+        // enableRefunds if goal fail beneficiary else participants
+        if (complete) {
+            _enableRefunds();
+        } else {
+            // TODO send to charity somehow? transfer ownership?
+        }
     }
 
     function fulfill(bool someData) public {
