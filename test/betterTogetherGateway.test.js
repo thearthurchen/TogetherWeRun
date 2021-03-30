@@ -1,4 +1,4 @@
-const { expect } = require('chai')
+const { expect, assert } = require('chai')
 const EVM_ERROR = 'Error: VM Exception while processing transaction: revert'
 const ALREADY_HAVE_PACT_ERROR = `${EVM_ERROR} You already have a pact!`
 const YOU_CANT_CHANGE_PACT_ERROR = `${EVM_ERROR} Caller is not a host`
@@ -22,7 +22,11 @@ describe('BetterTogetherGateway', function () {
   let allMyFriends = []
 
   beforeEach(async function () {
-    provider = await ethers.getDefaultProvider();
+
+    // Using hardhat local blockchain instead
+    provider = await ethers.provider;
+    // provider = await ethers.getDefaultProvider();
+
     [owner, host, friend1, friend2, friend3, friend4] = await ethers.getSigners()
     allMyFriends = [friend1, friend2, friend3, friend4]
     BetterTogetherGateway = await ethers.getContractFactory('BetterTogetherGateway')
@@ -34,8 +38,42 @@ describe('BetterTogetherGateway', function () {
 
     await gateway.deployed()
     gateway.on('*', (event) => {
-      console.log(event)
+   //   console.log(event)
     })
+  })
+
+  it('Escrow holds the correct amount after make pledge', async function () {
+    // Create a Better Together
+    await gateway.connect(host).weAreBetterTogether()
+    // We get the inviteCode and address of pact and create new instance to contract
+    const [inviteCode, pactAddress] = await Promise.all([
+      gateway.connect(host).getInviteCode(),
+      gateway.connect(host).getMyPact()
+    ])
+    const Pact = await ethers.getContractFactory('Pact')
+    const pact = await Pact.attach(pactAddress)
+    // Set conditions
+    await pact.connect(host).setConditions(10, Date.now(), 100)
+    // Friend1 wants to join through pact contract
+    await pact.connect(friend1).joinPact(host.address, inviteCode)
+    console.log(await pact.connect(host).getConditions())
+    const RefundEscrow = await ethers.getContractFactory('RefundEscrow')
+    // Friend1 pledges
+    const [b] = await pact.connect(friend1).getMyBalance()
+    console.log(ethers.BigNumber.from(b).toString())
+
+    // Test pledge value
+    const pledgeValue = 10;
+    await pact.connect(friend1).makePledge({ value: pledgeValue });
+
+    // Get the escrow address of pact to attach to copy of test refund escrow
+    escrowAddress = await pact.connect(host).getEscrowAddress();
+    refundEscrow = await RefundEscrow.attach(escrowAddress);
+
+    // Get deposits of friend1's pledge amount stored in the escrow
+    escrowFriendDeposit = await refundEscrow.depositsOf(friend1.address);
+    console.log("escrow deposit value of friend pledged: " + escrowFriendDeposit);
+    assert.equal(ethers.BigNumber.from(escrowFriendDeposit).toString(), "10");
   })
 
   it('Should only be able to create once per sender and get invite code', async function () {
@@ -157,8 +195,11 @@ describe('Access Control', function () {
   let pact
 
   beforeEach(async function () {
-    // Set default provider
-    provider = await ethers.getDefaultProvider();
+
+    // Using hardhat local blockchain instead
+    provider = await ethers.provider;
+    // provider = await ethers.getDefaultProvider();
+
     // Get signers
     [owner, host, friend1, friend2, friend3, friend4] = await ethers.getSigners()
     allMyFriends = [friend1, friend2, friend3, friend4]
@@ -174,6 +215,7 @@ describe('Access Control', function () {
     const Pact = await ethers.getContractFactory('Pact')
     pact = await Pact.attach(pactAddress)
   })
+
 
   // TODO can chai catch exceptions (can't be bothered to look at api right now)
   // TODO Try-Catch will create false positive test cases if we never throw

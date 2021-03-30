@@ -115,7 +115,7 @@ contract Pact is Ownable, AccessControl {
         require(msg.sender.balance > 0, "This should work?");
         require(msg.sender.balance >= pledge, "You need to pledge a bit more to be better together");
         // Deposit into our escrow
-        escrow.deposit{value: msg.value}(wallet);
+        escrow.deposit{value: msg.value}(msg.sender);
         emit Deposited(msg.sender, msg.value);
     }
 
@@ -156,6 +156,12 @@ contract Pact is Ownable, AccessControl {
     // TODO DEBUG REMOVE THIS LATER
     function foo(address user) external view returns (address, address, address) {
         return (msg.sender, user, host);
+    }
+
+    // Get the address of the escrow of this pact
+    // return address of the Refund Escrow contract
+    function getEscrowAddress() external view returns (address) {
+        return address(escrow);
     }
 
     // @dev Not sure if there's a more optimal way of getting the participants
