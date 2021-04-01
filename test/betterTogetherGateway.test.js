@@ -2,7 +2,7 @@ const { expect, assert } = require('chai')
 const EVM_ERROR = 'Error: VM Exception while processing transaction: revert'
 const ALREADY_HAVE_PACT_ERROR = `${EVM_ERROR} You already have a pact!`
 const YOU_CANT_CHANGE_PACT_ERROR = `${EVM_ERROR} Caller is not a host`
-const WRONG_HOST_OR_INVITE = `${EVM_ERROR} You have the wrong host and invite code`
+const WRONG_HOST_OR_INVITE = `${EVM_ERROR} Invalid host or code`
 const NOT_A_FRIEND = `${EVM_ERROR} Caller is not a friend`
 const NOT_IN_PACT = `${EVM_ERROR} You are not part of the pact`
 
@@ -17,6 +17,7 @@ describe('BetterTogetherGateway', function () {
   let friend2
   let friend3
   let friend4
+  let stranger1
   let BetterTogetherGateway
   let gateway
   let allMyFriends = []
@@ -50,12 +51,12 @@ describe('BetterTogetherGateway', function () {
       expect(e.toString()).to.equal(ALREADY_HAVE_PACT_ERROR)
     }
     // Check inviteCode
-    const pactAddress = await gateway.connect(host).getMyPact()
+    const pactAddress = await gateway.getMyPact()
     const Pact = await ethers.getContractFactory('Pact')
     const pact = await Pact.attach(pactAddress)
-    const inviteCode = await pact.connect(host).inviteCode()
+    const inviteCode = await pact.inviteCode()
     // TODO change the value to whatever seed we pass it or something
-    expect(inviteCode).to.equal('Hello')
+    expect(inviteCode).to.equal('test')
   })
 
   it('Should be able to have set pact conditions if owner', async function () {
@@ -111,9 +112,10 @@ describe('BetterTogetherGateway', function () {
     expect(errors).to.be.length(4)
   })
 
+  // TODO ???
   it('Shouldnt allow non friends or hosts to interact with Pact', async function () {})
 
-  it('Should withdraw from friend accounts if they make a pledge', async function () {
+  it('Escrow holds the correct amount after make pledge', async function () {
     // Create a Better Together
     await gateway.connect(host).createPact('test')
     // We get the inviteCode and address of pact and create new instance to contract
@@ -121,35 +123,7 @@ describe('BetterTogetherGateway', function () {
     const Pact = await ethers.getContractFactory('Pact')
     const pact = await Pact.attach(pactAddress)
     const inviteCode = await pact.connect(host).inviteCode()
-
-    // Set conditions
-    await pact.connect(host).setConditions(10, Date.now(), 100)
-    // Friend1 wants to join through pact contract
-    await pact.connect(friend1).joinPact(host.address, inviteCode)
-    console.log(await pact.connect(host).getConditions())
-    // Get their current balance
-    const currentBalance = await provider.getBalance(friend1.address)
-    console.log(`Current balance ${JSON.stringify(currentBalance)}`)
-    // Friend1 pledges
-    const [b] = await pact.connect(friend1).getMyBalance()
-    console.log(ethers.BigNumber.from(b).toString())
-    await pact.connect(friend1).makePledge({ value: 10 })
-    const newBalance = await provider.getBalance(friend1.address)
-    const [nb] = await pact.connect(friend1).getMyBalance()
-    console.log(ethers.BigNumber.from(nb).toString())
-    // Check that balanced has decreased by that much
-    expect(newBalance).to.equal(currentBalance)
-  })
-
-  it('Escrow holds the correct amount after make pledge', async function () {
-    // Create a Better Together
-    await gateway.connect(host).createPact()
-    // We get the inviteCode and address of pact and create new instance to contract
-    const pactAddress = await gateway.connect(host).getMyPact()
-    const Pact = await ethers.getContractFactory('Pact')
-    const pact = await Pact.attach(pactAddress)
-    const inviteCode = await pact.connect(host).inviteCode()
-
+    console.log('1')
     // Set conditions
     await pact.connect(host).setConditions(10, Date.now(), 100)
     // Friend1 wants to join through pact contract
@@ -177,7 +151,7 @@ describe('BetterTogetherGateway', function () {
 
   it('Only owner of escrow (the gateway) should be able to call refund pledges', async function () {
     // Create a Better Together
-    await gateway.connect(host).createPact()
+    await gateway.connect(host).createPact('test')
     // We get the inviteCode and address of pact and create new instance to contract
     const pactAddress = await gateway.connect(host).getMyPact()
     const Pact = await ethers.getContractFactory('Pact')
@@ -220,7 +194,7 @@ describe('BetterTogetherGateway', function () {
 
   it('Only owner of escrow (the gateway) should be able to withdraw pledges', async function () {
     // Create a Better Together
-    await gateway.connect(host).createPact()
+    await gateway.connect(host).createPact('test')
     // We get the inviteCode and address of pact and create new instance to contract
     const pactAddress = await gateway.connect(host).getMyPact()
     const Pact = await ethers.getContractFactory('Pact')
@@ -316,7 +290,7 @@ describe('Access Control', function () {
       await pact.connect(friend1).joinPact(host.address, 'Hello')
       await pact.connect(friend1).makePledge({ value: 10 })
     } catch (e) {
-      expect(e.toString()).to.equal(NOT_A_FRIEND)
+      expect(e.toString()).to.equal(WRONG_HOST_OR_INVITE)
     }
   })
 
@@ -330,7 +304,7 @@ describe('Access Control', function () {
 
   it('Should reject bad host with proper invite code', async function () {
     try {
-      await pact.connect(friend1).joinPact(friend2.address, 'Hello')
+      await pact.connect(friend1).joinPact(friend2.address, 'test')
     } catch (e) {
       expect(e.toString()).to.equal(WRONG_HOST_OR_INVITE)
     }

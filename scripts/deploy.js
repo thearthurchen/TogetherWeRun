@@ -10,7 +10,7 @@ async function main () {
 
   // console.log('PaymentGateway deployed to:', paymentGateway.address)
   const Gateway = await ethers.getContractFactory('BetterTogetherGateway')
-  const gateway = await Gateway.deploy(accounts[0].address, accounts[1].address)
+  const gateway = await Gateway.deploy()
 }
 
 main()

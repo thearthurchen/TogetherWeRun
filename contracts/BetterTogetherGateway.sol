@@ -40,7 +40,6 @@ contract BetterTogetherGateway is Ownable {
             payable(address(this)),
             msg.sender,
             _numOfPacts.current(),
-//            _alarmAddress,
             "asdf"
         );
         pacts.push(dummy);
@@ -56,7 +55,6 @@ contract BetterTogetherGateway is Ownable {
             payable(address(this)),
             msg.sender,
             _numOfPacts.current(),
-//            _alarmAddress,
             inviteCode
         );
         pacts.push(pact);
@@ -67,8 +65,8 @@ contract BetterTogetherGateway is Ownable {
     }
 
     // @dev Return the Pact Address after we've created pact
-    function getMyPact(address a) external view returns (address) {
-        uint256 contractIndex = _originatorToEscrowIndex[a];
+    function getMyPact() external view returns (address) {
+        uint256 contractIndex = _originatorToEscrowIndex[msg.sender];
         require(contractIndex > 0, "Your friend doesn't want to be better together");
         return address(pacts[contractIndex]);
     }
