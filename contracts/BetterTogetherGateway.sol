@@ -7,7 +7,7 @@ import "@openzeppelin/contracts/utils/Counters.sol";
 import "@openzeppelin/contracts/math/SafeMath.sol";
 import "@openzeppelin/contracts/payment/escrow/RefundEscrow.sol";
 import "./Pact.sol";
-import "./alarmClient/IAlarmClient.sol";
+import "./alarmClient/AlarmClient.sol";
 
 
 contract BetterTogetherGateway is Ownable {
@@ -29,19 +29,19 @@ contract BetterTogetherGateway is Ownable {
     mapping (address => bool) private _host;
 
     // Client addresses that we'll inject into our Pacts
-    address alarmAddress;
+//    AlarmClient _alarmClient;
+//    address _alarmAddress;
 
     // @dev borrowed from
     // https://medium.com/@ethdapp/using-the-openzeppelin-escrow-library-6384f22caa99
-    constructor(address _alarmAddress) public payable {
-        alarmAddress = _alarmAddress;
+    constructor() public payable {
         // We want all new contracts from this gateway to start at 1
         Pact dummy = new Pact(
             payable(address(this)),
             msg.sender,
             _numOfPacts.current(),
-            _alarmAddress,
-            ""
+//            _alarmAddress,
+            "asdf"
         );
         pacts.push(dummy);
         _numOfPacts.increment();
@@ -56,7 +56,7 @@ contract BetterTogetherGateway is Ownable {
             payable(address(this)),
             msg.sender,
             _numOfPacts.current(),
-            alarmAddress,
+//            _alarmAddress,
             inviteCode
         );
         pacts.push(pact);
