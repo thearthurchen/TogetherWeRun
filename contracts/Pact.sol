@@ -9,7 +9,7 @@ import "./stravaClient/IStravaClient.sol";
 import "./stravaClient/StravaClient.sol";
 
 
-contract Pact is Ownable, AccessControl, StravaClient {
+contract Pact is Ownable, AccessControl {
 
     // Use SafeMath because its safe
     using SafeMath for uint256;
@@ -68,9 +68,8 @@ contract Pact is Ownable, AccessControl, StravaClient {
         address payable _wallet, // do we want this to be beneficiary?
         address _host,
         uint256 _id,
-        address _alarmAddress,
         string memory _inviteCode
-    ) StravaClient() public  {
+    ) public  {
         // Set the params we need for this Pact
         wallet = _wallet;
         host = _host;
@@ -86,8 +85,8 @@ contract Pact is Ownable, AccessControl, StravaClient {
         _setupRole(HOST_ROLE, _host);
         _setupRole(FRIEND_ROLE, _host);
         // Set alarm clock to the alarm clients based on provided addresses
-        alarmClient = IAlarmClient(_alarmAddress);
-        alarmAddress = _alarmAddress;
+//        alarmClient = IAlarmClient(_alarmAddress);
+//        alarmAddress = _alarmAddress;
     }
 
     function _compareStringsByBytes(string memory s1, string memory s2) internal pure returns(bool) {
@@ -177,32 +176,10 @@ contract Pact is Ownable, AccessControl, StravaClient {
         return host;
     }
 
-    // TODO DEBUG REMOVE THIS LATER
-    function getMyBalance() external view returns (uint256, uint256, uint256) {
-        return (msg.sender.balance, pledge, address(escrow).balance);
-    }
-
-    // TODO DEBUG REMOVE THIS LATER
-    function foo(address user) external view returns (address, address, address) {
-        return (msg.sender, user, host);
-    }
-
     // Get the address of the escrow of this pact
     // return address of the Refund Escrow contract
     function getEscrowAddress() external view returns (address) {
         return address(escrow);
-    }
-
-    // This would probably call the StravaClient to update the progress
-    // For all the participants
-    function updateProgress() external {
-        // msg.sender requests progress
-
-    }
-
-    // Make sure that the goal is complete for each participant
-    function _checkComplete() internal returns (bool) {
-        return true;
     }
 
     function enableRefunds() external returns (uint16) {
@@ -226,23 +203,6 @@ contract Pact is Ownable, AccessControl, StravaClient {
         } else {
             // Escrow still active as is
             return 3;
-        }
-    }
-
-    // This will be called by AlarmClock
-    // BetterTogetherGateway is the owner which will call into this
-    function finishPact() public {
-        // Make sure that its the right AlarmClock
-        // require(msg.sender == alarmAddress, "You are not the AlarmClock");
-        // TODO calculate differences
-        bool complete = _checkComplete();
-        // Set state to finished
-        state = PactState.Finished;
-        // enableRefunds if goal fail beneficiary else participants
-        if (complete) {
-            this.enableRefunds();
-        } else {
-            // TODO send to charity somehow? transfer ownership?
         }
     }
 
@@ -290,7 +250,7 @@ contract Pact is Ownable, AccessControl, StravaClient {
         require(hasRole(FRIEND_ROLE, msg.sender), "You are not part of the pact");
         // Request Strava Data on behalf of the user
         // TODO we will request StravaData within Pact as it is also StravaClient?
-        requestStravaData(msg.sender, uint64(block.timestamp));
+//        requestStravaData(msg.sender, uint64(block.timestamp));
     }
 
     function _updateProgress(address user, uint timestamp, uint8 distance) internal {
@@ -316,11 +276,11 @@ contract Pact is Ownable, AccessControl, StravaClient {
     }
 
     // TODO (TANNER) just check this
-    function fulfill(bytes32 requestId, address user, uint timestamp, uint8 distance) public override recordChainlinkFulfillment(requestId){
-        // Make sure that we're in the Started state
-        require(state == PactState.Started, "Pact must be started for any progress updates");
-        _updateProgress(user, timestamp, distance);
-    }
+//    function fulfill(bytes32 requestId, address user, uint timestamp, uint8 distance) public override recordChainlinkFulfillment(requestId){
+//        // Make sure that we're in the Started state
+//        require(state == PactState.Started, "Pact must be started for any progress updates");
+//        _updateProgress(user, timestamp, distance);
+//    }
 
     // Make sure that the goal is complete for each participant
     function _checkComplete() internal returns (bool) {

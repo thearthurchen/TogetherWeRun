@@ -7,7 +7,7 @@ import "@openzeppelin/contracts/utils/Counters.sol";
 import "@openzeppelin/contracts/math/SafeMath.sol";
 import "@openzeppelin/contracts/payment/escrow/RefundEscrow.sol";
 import "./Pact.sol";
-import "./alarmClient/IAlarmClient.sol";
+import "./alarmClient/AlarmClient.sol";
 
 
 contract BetterTogetherGateway is Ownable {
@@ -29,19 +29,18 @@ contract BetterTogetherGateway is Ownable {
     mapping (address => bool) private _host;
 
     // Client addresses that we'll inject into our Pacts
-    address alarmAddress;
+//    AlarmClient _alarmClient;
+//    address _alarmAddress;
 
     // @dev borrowed from
     // https://medium.com/@ethdapp/using-the-openzeppelin-escrow-library-6384f22caa99
-    constructor(address _alarmAddress) public payable {
-        alarmAddress = _alarmAddress;
+    constructor() public payable {
         // We want all new contracts from this gateway to start at 1
         Pact dummy = new Pact(
             payable(address(this)),
             msg.sender,
             _numOfPacts.current(),
-            _alarmAddress,
-            ""
+            "asdf"
         );
         pacts.push(dummy);
         _numOfPacts.increment();
@@ -56,7 +55,6 @@ contract BetterTogetherGateway is Ownable {
             payable(address(this)),
             msg.sender,
             _numOfPacts.current(),
-            alarmAddress,
             inviteCode
         );
         pacts.push(pact);
@@ -67,8 +65,8 @@ contract BetterTogetherGateway is Ownable {
     }
 
     // @dev Return the Pact Address after we've created pact
-    function getMyPact(address a) external view returns (address) {
-        uint256 contractIndex = _originatorToEscrowIndex[a];
+    function getMyPact() external view returns (address) {
+        uint256 contractIndex = _originatorToEscrowIndex[msg.sender];
         require(contractIndex > 0, "Your friend doesn't want to be better together");
         return address(pacts[contractIndex]);
     }
