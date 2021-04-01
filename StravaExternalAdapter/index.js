@@ -1,4 +1,19 @@
-const { Requester, Validator } = require('@chainlink/external-adapter')
+/* eslint-disable standard/no-callback-literal */
+const { Requester, Validator } = require('@chainlink/external-adapter');
+// const dynamoose = require('dynamoose');
+
+// dynamoose.aws.sdk.config.update({
+//   accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+//   secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+//   region: process.env.REGION
+// });
+
+// const stravaUsers = dynamoose.model('StravaUsers', {
+//   userAddress: String,
+//   accessToken: String,
+//   refreshToken: String,
+//   userID: String
+// }, { create: false });
 
 // Define custom error scenarios for the API.
 // Return true for the adapter to retry.
@@ -7,47 +22,64 @@ const customError = (data) => {
   return false
 }
 
-// Define custom parameters to be used by the adapter.
-// Extra parameters can be stated in the extra object,
-// with a Boolean value indicating whether or not they
-// should be required.
-const customParams = {
-  base: ['base', 'from', 'coin'],
-  quote: ['quote', 'to', 'market'],
-  endpoint: false
-}
-
-const createRequest = (input, callback) => {
-  // The Validator helps you validate the Chainlink request data
-  const validator = new Validator(callback, input, customParams)
-  const jobRunID = validator.validated.id
-  const endpoint = validator.validated.data.endpoint || 'price'
-  const url = `https://min-api.cryptocompare.com/data/${endpoint}`
-  const fsym = validator.validated.data.base.toUpperCase()
-  const tsyms = validator.validated.data.quote.toUpperCase()
-
-  const params = {
-    fsym,
-    tsyms
+const createAthleteActivityRequest = (input, cb) => {
+  const customParams = {
+    id: true
   }
 
-  // This is where you would add method and headers
-  // you can add method like GET or POST and add it to the config
-  // The default is GET requests
-  // method = 'get'
-  // headers = 'headers.....'
+  const validator = new Validator(cb, input, customParams)
+  const { data: { id: userID, userAddress }, id: jobRunID } = validator.validated;
+
   const config = {
-    url,
-    params
+    url: `https://www.strava.com/api/v3/athletes/${userID}/stats`,
+    headers: {
+      accept: 'application/json',
+      authorization: `Bearer ${process.env.ACCESS_TOKEN}`
+    }
   }
 
-  // The Requester allows API calls be retry in case of timeout
-  // or connection failure
+  // DB connection (TODO)
+  stravaUsers.get(userAddress)
+    .then(res => console.log(res));
+
   Requester.request(config, customError)
     .then(response => {
-      // It's common practice to store the desired value at the top-level
-      // result key. This allows different adapters to be compatible with
-      // one another.
+      response.data.result = Requester.validateResultNumber(response.data, [tsyms])
+      cb(response.status, Requester.success(jobRunID, response))
+    })
+    .catch(error => {
+      cb(500, Requester.errored(jobRunID, error))
+    })
+}
+
+const createRefreshTokenRequest = (input, callback) => {
+  // Define custom parameters to be used by the adapter.
+  // Extra parameters can be stated in the extra object,
+  // with a Boolean value indicating whether or not they
+  // should be required.
+  const customParams = {
+    refresh_token: true
+  }
+
+  // The Validator helps you validate the Chainlink request data
+  const validator = new Validator(callback, input, customParams)
+
+  const { data: { refresh_token: refreshToken }, id: jobRunID } = validator.validated
+
+  const config = {
+    url: 'https://www.strava.com/oauth/token',
+    params: {
+      client_id: process.env.CLIENT_ID,
+      client_secret: process.env.CLIENT_SECRET,
+      refresh_token: refreshToken,
+      grant_type: 'refresh_token'
+    },
+    method: 'post'
+  }
+
+  // TODO: update user access token
+  Requester.request(config, customError)
+    .then(response => {
       response.data.result = Requester.validateResultNumber(response.data, [tsyms])
       callback(response.status, Requester.success(jobRunID, response))
     })
@@ -58,23 +90,23 @@ const createRequest = (input, callback) => {
 
 // This is a wrapper to allow the function to work with
 // GCP Functions
-exports.gcpservice = (req, res) => {
-  createRequest(req.body, (statusCode, data) => {
-    res.status(statusCode).send(data)
-  })
+const gcpservice = (req, res) => {
+  // createRequest(req.body, (statusCode, data) => {
+  //   res.status(statusCode).send(data)
+  // })
 }
 
 // This is a wrapper to allow the function to work with
 // AWS Lambda
-exports.handler = (event, context, callback) => {
-  createRequest(event, (statusCode, data) => {
-    callback(null, data)
-  })
+const handler = (event, context, callback) => {
+  // createRequest(event, (statusCode, data) => {
+  //   callback(null, data)
+  // })
 }
 
 // This is a wrapper to allow the function to work with
 // newer AWS Lambda implementations
-exports.handlerv2 = (event, context, callback) => {
+const handlerv2 = (event, context, callback) => {
   createRequest(JSON.parse(event.body), (statusCode, data) => {
     callback(null, {
       statusCode: statusCode,
@@ -86,4 +118,10 @@ exports.handlerv2 = (event, context, callback) => {
 
 // This allows the function to be exported for testing
 // or for running in express
-module.exports.createRequest = createRequest
+module.exports = {
+  createAthleteActivityRequest,
+  createRefreshTokenRequest,
+  gcpservice,
+  handler,
+  handlerv2
+}
