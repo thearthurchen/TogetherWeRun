@@ -6,9 +6,10 @@ import "@openzeppelin/contracts/utils/Counters.sol";
 import '@openzeppelin/contracts/payment/escrow/RefundEscrow.sol';
 import "./alarmClient/IAlarmClient.sol";
 import "./stravaClient/IStravaClient.sol";
+import "./stravaClient/StravaClient.sol";
 
 
-contract Pact is Ownable, AccessControl {
+contract Pact is Ownable, AccessControl, StravaClient {
 
     // Use SafeMath because its safe
     using SafeMath for uint256;
@@ -45,10 +46,8 @@ contract Pact is Ownable, AccessControl {
     PactState state;
 
     // Clients that will call into our Pact
-    address stravaAddress;
     address alarmAddress;
     IAlarmClient alarmClient;
-    IStravaClient stravaClient;
 
     // Constants
     uint256 SECONDS_IN_A_DAY = 86400;
@@ -69,10 +68,9 @@ contract Pact is Ownable, AccessControl {
         address payable _wallet, // do we want this to be beneficiary?
         address _host,
         uint256 _id,
-        address _stravaAddress,
         address _alarmAddress,
         string memory _inviteCode
-    ) public {
+    ) StravaClient() public  {
         // Set the params we need for this Pact
         wallet = _wallet;
         host = _host;
@@ -89,9 +87,7 @@ contract Pact is Ownable, AccessControl {
         _setupRole(FRIEND_ROLE, _host);
         // Set alarm clock to the alarm clients based on provided addresses
         alarmClient = IAlarmClient(_alarmAddress);
-        stravaClient = IStravaClient(_stravaAddress);
         alarmAddress = _alarmAddress;
-        stravaAddress = _stravaAddress;
     }
 
     function _compareStringsByBytes(string memory s1, string memory s2) internal pure returns(bool) {
@@ -220,7 +216,7 @@ contract Pact is Ownable, AccessControl {
         require(hasRole(FRIEND_ROLE, msg.sender), "You are not part of the pact");
         // Request Strava Data on behalf of the user
         // TODO we will request StravaData within Pact as it is also StravaClient?
-        stravaClient.requestStravaData(msg.sender, uint64(block.timestamp));
+        requestStravaData(msg.sender, uint64(block.timestamp));
     }
 
     function _updateProgress(address user, uint timestamp, uint8 distance) internal {
@@ -245,9 +241,7 @@ contract Pact is Ownable, AccessControl {
         }
     }
 
-    function fulfill(address user, uint timestamp, uint8 distance) external {
-        // Make sure that its the StravaClient address
-        require(msg.sender == stravaAddress, "Not the right StravaClient Address");
+    function fulfill(bytes32 requestId, address user, uint timestamp, uint8 distance) public override {
         // Make sure that we're in the Started state
         require(state == PactState.Started, "Pact must be started for any progress updates");
         _updateProgress(user, timestamp, distance);
@@ -280,12 +274,6 @@ contract Pact is Ownable, AccessControl {
         } else {
             // TODO send to charity somehow? transfer ownership?
         }
-    }
-
-    function fulfill(bool someData) public {
-        // Make sure its the right StravaClient
-        require(msg.sender == stravaAddress, "You are not the StravaClient");
-        // Update the progress
     }
 
     // TODO DEBUG REMOVE THIS LATER

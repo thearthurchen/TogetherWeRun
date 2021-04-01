@@ -30,20 +30,17 @@ contract BetterTogetherGateway is Ownable {
 
     // Client addresses that we'll inject into our Pacts
     address alarmAddress;
-    address stravaAddress;
 
     // @dev borrowed from
     // https://medium.com/@ethdapp/using-the-openzeppelin-escrow-library-6384f22caa99
-    constructor(address _alarmAddress, address _stravaAddress) public payable {
+    constructor(address _alarmAddress) public payable {
         alarmAddress = _alarmAddress;
-        stravaAddress = _stravaAddress;
         // We want all new contracts from this gateway to start at 1
         Pact dummy = new Pact(
             payable(address(this)),
             msg.sender,
             _numOfPacts.current(),
             _alarmAddress,
-            _stravaAddress,
             ""
         );
         pacts.push(dummy);
@@ -60,7 +57,6 @@ contract BetterTogetherGateway is Ownable {
             msg.sender,
             _numOfPacts.current(),
             alarmAddress,
-            stravaAddress,
             inviteCode
         );
         pacts.push(pact);
