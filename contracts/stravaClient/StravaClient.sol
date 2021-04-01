@@ -68,9 +68,5 @@ contract StravaClient is Ownable, ChainlinkClient {
      * @dev
      * Receive the response in the form of uint256
      */
-    function fulfill(bytes32 requestId, address user, uint timestamp, uint8 distance) public virtual
-    {
-        // TODO Call the Pact's public fulfill based on mapping where we stored msg.sender to requestId
-        // Refer to AlarmClient
-    }
+    function fulfill(bytes32 requestId, address user, uint timestamp, uint8 distance) public virtual {}
 }

@@ -241,6 +241,7 @@ contract Pact is Ownable, AccessControl, StravaClient {
         }
     }
 
+    // TODO (TANNER) update progress with the data
     function fulfill(bytes32 requestId, address user, uint timestamp, uint8 distance) public override {
         // Make sure that we're in the Started state
         require(state == PactState.Started, "Pact must be started for any progress updates");
