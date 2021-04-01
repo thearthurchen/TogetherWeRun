@@ -5,10 +5,12 @@ async function main () {
   const accounts = await ethers.getSigners()
 
   // We get the contract to deploy
-  const PaymentGateway = await ethers.getContractFactory('PaymentGateway')
-  const paymentGateway = await PaymentGateway.deploy(accounts[0].address)
+  // const PaymentGateway = await ethers.getContractFactory('PaymentGateway')
+  // const paymentGateway = await PaymentGateway.deploy(accounts[0].address)
 
-  console.log('PaymentGateway deployed to:', paymentGateway.address)
+  // console.log('PaymentGateway deployed to:', paymentGateway.address)
+  const Gateway = await ethers.getContractFactory('BetterTogetherGateway')
+  const gateway = await Gateway.deploy(accounts[0].address, accounts[1].address)
 }
 
 main()
