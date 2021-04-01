@@ -33,7 +33,7 @@ contract AlarmClient is Ownable, ChainlinkClient {
      * @dev
      * Fall back check if no one checks the progress on the day that Pact ends
      */
-    function cronJob(address pactAddress, uint64 endDateUtc) public onlyOwner {
+    function setAlarm(address pactAddress, uint64 endDateUtc) public onlyOwner {
         Chainlink.Request memory req = buildChainlinkRequest(jobId, address(this), this.fulfill.selector);
         // Does this even work
         // TODO calculate days from now until endDate

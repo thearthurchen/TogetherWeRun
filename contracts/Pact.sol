@@ -1,9 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.6.12;
 
-import "@chainlink/contracts/src/v0.6/ChainlinkClient.sol";
 import '@openzeppelin/contracts/access/AccessControl.sol';
 import '@openzeppelin/contracts/payment/escrow/RefundEscrow.sol';
+import "./alarmClient/IAlarmClient.sol";
+
 
 contract Pact is Ownable, AccessControl {
     using SafeMath for uint256;
@@ -21,7 +22,7 @@ contract Pact is Ownable, AccessControl {
 //    event ProgressUpdated();
     event PactStatusChanged(PactState state);
 
-    // Wallet of the host
+    // Wallet of the gateway
     address payable wallet;
     // Hosting address of person who started this pact
     address public host;
@@ -37,55 +38,50 @@ contract Pact is Ownable, AccessControl {
     // The state of current Pact
     PactState state;
 
-    // Chainlink Stuff
-    address private oracle;
-    bytes32 private externalAdapterJobId;
-    bytes32 private alarmClockJobId;
-    uint256 private externalAdapterFee;
-    uint256 private alarmClockFee;
+    // Clients that will call into our Pact
+    address stravaAddress;
+    address alarmAddress;
+
+    IAlarmClient alarmClient;
 
     // Conditions for the Pact, maybe we can make it a struct
     uint256 pledge;
     uint64 endDate;
     uint64 checkpointThreshold;
 
-    struct BloodPact {
-        mapping ( address => mapping ( uint64 => uint8 ) ) progress;
+    struct Goal {
+        mapping ( address => mapping ( uint64 => uint8[] ) ) progress;
+        uint256 pledge;
+        uint64 endDate;
+        uint64 checkpointThreshold;
     }
 
     // @dev borrowed from
     // https://medium.com/@ethdapp/using-the-openzeppelin-escrow-library-6384f22caa99
-    constructor(address payable _wallet, address _host, uint256 _id) public {
+    constructor(
+        address payable _wallet,
+        address _host,
+        uint256 _id,
+        address _stravaAddress,
+        address _alarmAddress,
+        string _inviteCode
+    ) public {
         // Set the params we need for this Pact
         wallet = _wallet;
         host = _host;
         id = _id;
         // We use a refund escrow wallet should actually be the charity
         escrow = new RefundEscrow(wallet);
-        // TODO We need to fix invite code generation
-        inviteCode = _generateInviteCode();
-        inviteCode = "Hello";
+        // TODO We could opt to use the InviteCodeClient if we want VRF
+        // Otherwise client passes in the code
+        inviteCode = _inviteCode;
         // Pact is Pending by default
         state = PactState.Pending;
         // Grant the host HOST_ROLE
         _setupRole(HOST_ROLE, _host);
-        _setupRole(HOST_ROLE, address(this));
-        /**
-         * ExternalAdapter
-         * Network: Kovan
-         * Oracle: 0x2f90A6D021db21e1B2A077c5a37B3C7E75D15b7e
-         * Job ID: 29fa9aa13bf1468788b7cc4a500a45b8
-         * Fee: 0.1 LINK
-         *
-         * AlarmClock
-         * JobID: a7ab70d561d34eb49e9b1612fd2e044b
-         * TODO we need to move this out and use this pattern
-         * https://github.com/tweether-protocol/tweether/blob/master/contracts/Tweether.sol#L69
-         */
-        externalAdapterJobId = "29fa9aa13bf1468788b7cc4a500a45b8";
-        alarmClockJobId = "a7ab70d561d34eb49e9b1612fd2e044b";
-        externalAdapterFee = 0.1 * 10 ** 18; // 0.1 LINK
-        alarmClockFee = 1 * 10 ** 18; // 1 LINK
+        // Set alarm clock to the alarm address
+        stravaAddress = _stravaAddress;
+        alarmAddress = _alarmAddress;
     }
 
     function _compareStringsByBytes(string memory s1, string memory s2) internal pure returns(bool){
@@ -109,11 +105,13 @@ contract Pact is Ownable, AccessControl {
     }
 
     // Deposit the amount of ether sent from sender
-    function makePledge() external payable {
+    function makePledge() external payable (bool) {
         require(state == PactState.Pending, "Pact is not allowing anymore pledges!");
+        // TODO let host make a pledge too
         require(hasRole(FRIEND_ROLE, msg.sender), "Caller is not a friend");
         // Make sure that they have enough to pledge
         require(msg.sender.balance > 0, "This should work?");
+        // TODO this is probably not right we only care if the msg.value is >= pledge
         require(msg.sender.balance >= pledge, "You need to pledge a bit more to be better together");
         // Deposit into our escrow
         escrow.deposit{value: msg.value}(msg.sender);
@@ -121,12 +119,14 @@ contract Pact is Ownable, AccessControl {
     }
 
     // TODO take the private key to sign it?
+    // DONT NEED THIS ANYMORE
     function _generateInviteCode() internal view returns (string memory) {
         require(state == PactState.Pending, "Pact is already started or finished can't invite more people");
         return "Hello!!";
     }
 
     // Make sure that they have the right invite code
+    // TODO combine this w/ makePact
     function joinPact(address _host, string memory _inviteCode) external payable {
         // Checks to make sure Pact is in good state and the caller is calling the right Pact
         require(!participantMap[msg.sender], "Participant already added!");
@@ -243,15 +243,43 @@ contract Pact is Ownable, AccessControl {
 
     function startPact() external {
         require(hasRole(HOST_ROLE, msg.sender), "You must be the host");
+        // TODO probably need to lock escrow
+        // JK it's Active on creation must be Refund or Closed
+        // For any refund or beneficiary withdrawal
+        alarmClock.setAlarm(address(this), endDate);
         state = PactState.Started;
     }
 
-    function setFinished() public onlyOwner {
+    // This would probably call the StravaClient to update the progress
+    // For all the participants
+    function updateProgress() external {
+
+    }
+
+    // This will be called by AlarmClock
+    // BetterTogetherGateway is the owner which will call into this
+    function setFinished() public {
+        // Make sure that its the right AlarmClock
+        require(msg.sender == alarmAddress, "You are not the AlarmClock");
+        // TODO calculate differences
+        // Set state to finished
         state = PactState.Finished;
     }
 
+    function fulfill(bool someData) public {
+        // Make sure its the right StravaClient
+        require(msg.sender == stravaAddress, "You are not the StravaClient");
+        // Update the progress
+    }
 
+    // TODO DEBUG REMOVE THIS LATER
+    function getMyBalance() external view returns (uint256, uint256, uint256) {
+        return (msg.sender.balance, pledge, address(escrow).balance);
+    }
 
-
+    // TODO DEBUG REMOVE THIS LATER
+    function foo(address user) external view returns (address, address, address) {
+        return (msg.sender, user, host);
+    }
 
 }

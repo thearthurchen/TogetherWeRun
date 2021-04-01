@@ -14,7 +14,7 @@ contract MockAlarmClient {
      * @dev
      * Fall back check if no one checks the progress on the day that Pact ends
      */
-    function cronJob(address pactAddress, uint64 endDateUtc) public  {
+    function setAlarm(address pactAddress, uint64 endDateUtc) public  {
         requestIdToAddress[bytes32(count)] = pactAddress;
         count += 1;
     }
