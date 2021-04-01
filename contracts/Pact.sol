@@ -114,7 +114,7 @@ contract Pact is Ownable, AccessControl {
         // TODO this is probably not right we only care if the msg.value is >= pledge
         require(msg.sender.balance >= pledge, "You need to pledge a bit more to be better together");
         // Deposit into our escrow
-        escrow.deposit{value: msg.value}(wallet);
+        escrow.deposit{value: msg.value}(msg.sender);
         emit Deposited(msg.sender, msg.value);
     }
 
@@ -147,6 +147,80 @@ contract Pact is Ownable, AccessControl {
     function getHost() external view returns (address) {
         require(hasRole(FRIEND_ROLE, msg.sender) || hasRole(HOST_ROLE, msg.sender), "You are not part of the pact");
         return host;
+    }
+
+    // TODO DEBUG REMOVE THIS LATER
+    function getMyBalance() external view returns (uint256, uint256, uint256) {
+        return (msg.sender.balance, pledge, address(escrow).balance);
+    }
+
+    // TODO DEBUG REMOVE THIS LATER
+    function foo(address user) external view returns (address, address, address) {
+        return (msg.sender, user, host);
+    }
+
+    // Get the address of the escrow of this pact
+    // return address of the Refund Escrow contract
+    function getEscrowAddress() external view returns (address) {
+        return address(escrow);
+    }
+
+    // This would probably call the StravaClient to update the progress
+    // For all the participants
+    function updateProgress() external {
+        // msg.sender requests progress
+
+    }
+
+    // Make sure that the goal is complete for each participant
+    function _checkComplete() internal returns (bool) {
+        return true;
+    }
+
+    function enableRefunds() external returns (uint16) {
+        // Make sure that the goal is complete?
+        // Call the necessary escrow methods to enable refunds or lock it
+        // enableRefunds() or close()
+        require(hasRole(FRIEND_ROLE, msg.sender) || hasRole(HOST_ROLE, msg.sender), "You are not part of the pact");
+
+        // TODO:
+        // Check goal completed
+        if (true) {
+            // Enable refunds back to friends in pact
+            escrow.enableRefunds();
+            return 1;
+        // Check goal not completed and timer is not up
+        } else if (false) {
+            // Allow beneficiary to withdraw, i.e. charity
+            escrow.close();
+            return 2;
+        // If goal is not complete and timer is not up
+        } else {
+            // Escrow still active as is
+            return 3;
+        }
+    }
+
+    // This will be called by AlarmClock
+    // BetterTogetherGateway is the owner which will call into this
+    function finishPact() public {
+        // Make sure that its the right AlarmClock
+        // require(msg.sender == alarmAddress, "You are not the AlarmClock");
+        // TODO calculate differences
+        bool complete = _checkComplete();
+        // Set state to finished
+        state = PactState.Finished;
+        // enableRefunds if goal fail beneficiary else participants
+        if (complete) {
+            this.enableRefunds();
+        } else {
+            // TODO send to charity somehow? transfer ownership?
+        }
+    }
+
+    // Withdraw funds of a specific payee
+    function withdraw(address payable payee) external {
+        escrow.withdraw(payee);
     }
 
     // @dev Not sure if there's a more optimal way of getting the participants
