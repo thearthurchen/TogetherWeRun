@@ -18,4 +18,5 @@ contract What {
         uint256 randomness = 1;
         return bytes2(keccak256(abi.encodePacked(msg.sender, randomness)));
     }
+
 }

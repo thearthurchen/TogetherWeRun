@@ -4,6 +4,8 @@ pragma solidity ^0.6.12;
 import "@chainlink/contracts/src/v0.6/ChainlinkClient.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
+
+// TODO Pact will become StravaClient
 contract StravaClient is Ownable, ChainlinkClient {
     // Chainlink Stuff
     address private oracle;
@@ -34,8 +36,10 @@ contract StravaClient is Ownable, ChainlinkClient {
      * Create a Chainlink request to retrieve API response, find the target
      * data, then multiply by 1000000000000000000 (to remove decimal places from data).
      */
-    function requestStravaData() internal returns (bytes32 requestId)
+    // TODO (tanner) update this
+    function requestStravaData(address user, uint timestamp) internal returns (bytes32 requestId)
     {
+        // TODO Request strava data for address user, the msg.sender is the Pact
         Chainlink.Request memory req = buildChainlinkRequest(jobId, address(this), this.fulfill.selector);
 
         // Set the URL to perform the GET request on
@@ -65,8 +69,5 @@ contract StravaClient is Ownable, ChainlinkClient {
      * @dev
      * Receive the response in the form of uint256
      */
-    function fulfill(bytes32 _requestId, uint256 _volume) public recordChainlinkFulfillment(_requestId)
-    {
-
-    }
+    function fulfill(bytes32 requestId, address user, uint timestamp, uint8 distance) public virtual {}
 }
