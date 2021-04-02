@@ -7,6 +7,9 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 
 // TODO Pact will become StravaClient
 contract StravaClient is Ownable, ChainlinkClient {
+
+    uint256 public distance;
+
     // Chainlink Stuff
     address private oracle;
     bytes32 private jobId;
@@ -27,7 +30,7 @@ contract StravaClient is Ownable, ChainlinkClient {
     constructor () public {
         setPublicChainlinkToken();
         oracle = 0x2f90A6D021db21e1B2A077c5a37B3C7E75D15b7e;
-        jobId = "29fa9aa13bf1468788b7cc4a500a45b8";
+        jobId = "29fa9aa13bf1468788b7cc4a500a45b8"; // TODO (tanner): update this once deployed
         externalAdapterFee = 0.1 * 10 ** 18; // 0.1 LINK
     }
 
@@ -36,30 +39,13 @@ contract StravaClient is Ownable, ChainlinkClient {
      * Create a Chainlink request to retrieve API response, find the target
      * data, then multiply by 1000000000000000000 (to remove decimal places from data).
      */
-    // TODO (tanner) update this
     function requestStravaData(address user, uint timestamp) internal returns (bytes32 requestId)
     {
-        // TODO Request strava data for address user, the msg.sender is the Pact
         Chainlink.Request memory req = buildChainlinkRequest(jobId, address(this), this.fulfill.selector);
 
-        // Set the URL to perform the GET request on
-        req.add("get", "https://min-api.cryptocompare.com/data/pricemultifull?fsyms=ETH&tsyms=USD");
+        req.add("user", user);
+        req.add("timestamp", timestamp);
 
-        // Set the path to find the desired data in the API response, where the response format is:
-        // {"RAW":
-        //   {"ETH":
-        //    {"USD":
-        //     {
-        //      "VOLUME24HOUR": xxx.xxx,
-        //     }
-        //    }
-        //   }
-        //  }
-        req.add("path", "RAW.ETH.USD.VOLUME24HOUR");
-
-        // Multiply the result by 1000000000000000000 to remove decimals
-        int timesAmount = 10**18;
-        req.addInt("times", timesAmount);
 
         // Sends the request
         return sendChainlinkRequestTo(oracle, req, externalAdapterFee);
@@ -69,5 +55,7 @@ contract StravaClient is Ownable, ChainlinkClient {
      * @dev
      * Receive the response in the form of uint256
      */
-    function fulfill(bytes32 requestId, address user, uint timestamp, uint8 distance) public virtual {}
+    function fulfill(bytes32 _requestId, uint256 _distance) public virtual {
+        distance = _distance;
+    }
 }
