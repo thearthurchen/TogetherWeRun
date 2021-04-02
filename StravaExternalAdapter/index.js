@@ -1,5 +1,7 @@
 const { Requester, Validator } = require('@chainlink/external-adapter')
 
+const { getStravaDistance } = require('./strava')
+
 // Define custom error scenarios for the API.
 // Return true for the adapter to retry.
 const customError = (data) => {
@@ -14,12 +16,6 @@ const customError = (data) => {
 const customParams = {
   user: ['user'],
   timestamp: ['timestamp']
-}
-
-// TODO (zack): query strava here
-const getStravaDistance = async (user, address) => {
-  // query strava
-  return 1.5
 }
 
 const createRequest = async (input, callback) => {
