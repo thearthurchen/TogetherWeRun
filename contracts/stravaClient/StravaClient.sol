@@ -34,16 +34,36 @@ contract StravaClient is Ownable, ChainlinkClient {
         externalAdapterFee = 0.1 * 10 ** 18; // 0.1 LINK
     }
 
+    function addressToString(address _address) public pure returns (string memory _uintAsString) {
+        uint _i = uint256(_address);
+        if (_i == 0) {
+            return "0";
+        }
+        uint j = _i;
+        uint len;
+        while (j != 0) {
+            len++;
+            j /= 10;
+        }
+        bytes memory bstr = new bytes(len);
+        uint k = len - 1;
+        while (_i != 0) {
+            bstr[k--] = byte(uint8(48 + _i % 10));
+            _i /= 10;
+        }
+        return string(bstr);
+    }
+
     /**
      * @dev
      * Create a Chainlink request to retrieve API response, find the target
      * data, then multiply by 1000000000000000000 (to remove decimal places from data).
      */
-    function requestStravaData(string memory user, uint timestamp) internal returns (bytes32 requestId)
+    function requestStravaData(address user, uint timestamp) internal returns (bytes32 requestId)
     {
         Chainlink.Request memory req = buildChainlinkRequest(jobId, address(this), this.fulfill.selector);
 
-        req.add("user", user);
+        req.add("user", addressToString(user));
         req.addUint("timestamp", timestamp);
 
 
