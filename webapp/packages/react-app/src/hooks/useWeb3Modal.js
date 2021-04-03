@@ -42,8 +42,8 @@ function useWeb3Modal(config = {}) {
     setSignedInAddress(newProvider.selectedAddress);
   }, [web3Modal]);
 
+  // getRoles(provider, pactAddress)
   async function fetchRoles() {
-
     setRoles(await getRoles(provider, '0xB7A5bd0345EF1Cc5E66bf61BdeC17D2461fBd968'));
   };
 
