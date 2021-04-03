@@ -43,7 +43,7 @@ contract StravaClient is Ownable, ChainlinkClient {
     {
         Chainlink.Request memory req = buildChainlinkRequest(jobId, address(this), this.fulfill.selector);
 
-        req.addAddress("user", user);
+        req.add("user", user);
         req.addUint("timestamp", timestamp);
 
 
