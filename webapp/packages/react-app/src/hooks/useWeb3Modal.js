@@ -3,6 +3,7 @@ import { useCallback, useEffect, useState } from "react";
 import { Web3Provider } from "@ethersproject/providers";
 import Web3Modal from "web3modal";
 import WalletConnectProvider from "@walletconnect/web3-provider";
+import { getRoles } from '../contractFunctions.js';
 
 // import { getRoles } from "../services/contract-functions";
 
@@ -42,7 +43,8 @@ function useWeb3Modal(config = {}) {
   }, [web3Modal]);
 
   async function fetchRoles() {
-    // setRoles(await getRoles(provider, signedInAddress));
+
+    setRoles(await getRoles(provider, '0xB7A5bd0345EF1Cc5E66bf61BdeC17D2461fBd968'));
   };
 
   const logoutOfWeb3Modal = useCallback(
