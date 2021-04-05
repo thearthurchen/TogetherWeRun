@@ -9,7 +9,7 @@ import "./stravaClient/IStravaClient.sol";
 import "./stravaClient/StravaClient.sol";
 
 
-contract Pact is Ownable, AccessControl {
+contract Pact is Ownable, AccessControl, StravaClient {
 
     // Use SafeMath because its safe
     using SafeMath for uint256;
@@ -51,6 +51,8 @@ contract Pact is Ownable, AccessControl {
 
     // Constants
     uint256 SECONDS_IN_A_DAY = 86400;
+    address LINK_KOVAN = 0xa36085F69e2889c224210F603D836748e7dC0088;
+    address ORACLE_KOVAN = 0x2f90A6D021db21e1B2A077c5a37B3C7E75D15b7e;
 
     mapping ( address => mapping ( uint256 => uint256 ) ) timeToProgressIndex;
     mapping ( address => uint8[] ) progress;
@@ -62,6 +64,7 @@ contract Pact is Ownable, AccessControl {
     uint endDateUtc;
     uint daysPerCheck;
 
+
     // @dev borrowed from
     // https://medium.com/@ethdapp/using-the-openzeppelin-escrow-library-6384f22caa99
     // Transfer ownership of the escrow to charity
@@ -70,7 +73,7 @@ contract Pact is Ownable, AccessControl {
         address _host,
         uint256 _id,
         string memory _inviteCode
-    ) public  {
+    ) StravaClient(LINK_KOVAN, ORACLE_KOVAN) public  {
         // Set the params we need for this Pact
         wallet = _wallet;
         host = _host;
@@ -149,24 +152,6 @@ contract Pact is Ownable, AccessControl {
         participants.push(participant);
         _setupRole(FRIEND_ROLE, participant);
         emit FriendJoined(participant);
-    }
-
-    // Make sure that they have the right invite code
-    // TODO combine this w/ makePact
-    function joinPact(address _host, string memory _inviteCode) external payable {
-        // Checks to make sure Pact is in good state and the caller is calling the right Pact
-        require(!participantMap[msg.sender], "Participant already added!");
-        require(state == PactState.Pending, "You can't add anymore participants");
-        require(host == _host && _compareStringsByBytes(inviteCode, _inviteCode), "Invalid host or code");
-        participantMap[msg.sender] = true;
-        participants.push(msg.sender);
-        // Give the participant FRIEND_ROLE
-        _setupRole(FRIEND_ROLE, msg.sender);
-        // TAKE THEIR MONEY
-        require(msg.sender.balance >= minPledge, "You need to pledge a bit more to be better together");
-        // Deposit into our escrow
-        escrow.deposit{value: msg.value}(wallet);
-        emit Deposited(msg.sender, msg.value);
     }
 
     // HOW DO DEFAULT WORKS WITH COUNTERS AND STUFF

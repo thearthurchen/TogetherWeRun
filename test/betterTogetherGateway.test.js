@@ -127,7 +127,7 @@ describe('BetterTogetherGateway', function () {
     // Set conditions
     await pact.connect(host).setConditions(1, 10, Date.now(), 100)
     // Friend1 wants to join through pact contract
-    await pact.connect(friend1).joinPact(host.address, inviteCode)
+    await gateway.connect(friend1).joinPact(host.address, inviteCode)
     console.log(await pact.connect(host).getConditions())
 
     const RefundEscrow = await ethers.getContractFactory('RefundEscrow')
@@ -161,7 +161,7 @@ describe('BetterTogetherGateway', function () {
     // Set conditions
     await pact.connect(host).setConditions(1, 10, Date.now(), 100)
     // Friend1 wants to join through pact contract
-    await pact.connect(friend1).joinPact(host.address, inviteCode)
+    await gateway.connect(friend1).joinPact(host.address, inviteCode)
     console.log(await pact.connect(host).getConditions())
     const RefundEscrow = await ethers.getContractFactory('RefundEscrow')
     // Friend1 pledges
@@ -204,7 +204,7 @@ describe('BetterTogetherGateway', function () {
     // Set conditions
     await pact.connect(host).setConditions(1, 10, Date.now(), 100)
     // Friend1 wants to join through pact contract
-    await pact.connect(friend1).joinPact(host.address, inviteCode)
+    await gateway.connect(friend1).joinPact(host.address, inviteCode)
     console.log(await pact.connect(host).getConditions())
     const RefundEscrow = await ethers.getContractFactory('RefundEscrow')
     // Friend1 pledges
@@ -287,7 +287,7 @@ describe('Access Control', function () {
   // TODO Try-Catch will create false positive test cases if we never throw
   it('Should reject on non-friends making pledges', async function () {
     try {
-      await pact.connect(friend1).joinPact(host.address, 'Hello')
+      await gateway.connect(friend1).joinPact(host.address, 'Hello')
       await pact.connect(friend1).makePledge({ value: 10 })
     } catch (e) {
       expect(e.toString()).to.equal(WRONG_HOST_OR_INVITE)
@@ -296,7 +296,7 @@ describe('Access Control', function () {
 
   it('Should reject bad invite code', async function () {
     try {
-      await pact.connect(friend1).joinPact(host.address, 'Not Correct')
+      await gateway.connect(friend1).joinPact(host.address, 'Not Correct')
     } catch (e) {
       expect(e.toString()).to.equal(WRONG_HOST_OR_INVITE)
     }
@@ -304,7 +304,7 @@ describe('Access Control', function () {
 
   it('Should reject bad host with proper invite code', async function () {
     try {
-      await pact.connect(friend1).joinPact(friend2.address, 'test')
+      await gateway.connect(friend1).joinPact(friend2.address, 'test')
     } catch (e) {
       expect(e.toString()).to.equal(WRONG_HOST_OR_INVITE)
     }

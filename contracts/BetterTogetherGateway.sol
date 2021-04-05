@@ -71,9 +71,9 @@ contract BetterTogetherGateway is Ownable {
     // Join a pact through gateway
     function joinPact(address host, string memory inviteCode) external {
         uint256 pactIndex = _addressToPactIndex[host];
-        require(pactIndex > 0, "Your friend doesn't want to be better together");
+        require(pactIndex > 0, "Invalid host or code");
         Pact pact = pacts[pactIndex];
-        require(_compareStringsByBytes(inviteCode, pact.inviteCode()), "Invite code is wrong");
+        require(_compareStringsByBytes(inviteCode, pact.inviteCode()), "Invalid host or code");
         pact.addParticipant(msg.sender);
         _addressToPactIndex[msg.sender] = pactIndex;
         emit PactJoined(msg.sender, address(pact));
