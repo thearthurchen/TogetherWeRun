@@ -55,11 +55,12 @@ contract Pact is Ownable, AccessControl {
     mapping ( address => mapping ( uint256 => uint256 ) ) timeToProgressIndex;
     mapping ( address => uint8[] ) progress;
     mapping ( address => Counters.Counter ) indexes;
-    uint256 minPledge;
+    uint minPledge;
+    uint milesPerWeek;
     Counters.Counter daysUntilEnd;
-    uint256 startDateUtc;
-    uint256 endDateUtc;
-    uint256 daysPerCheck;
+    uint startDateUtc;
+    uint endDateUtc;
+    uint daysPerCheck;
 
     // @dev borrowed from
     // https://medium.com/@ethdapp/using-the-openzeppelin-escrow-library-6384f22caa99
@@ -104,7 +105,7 @@ contract Pact is Ownable, AccessControl {
     }
 
     // @dev setter and getter for conditions
-    function setConditions(uint256 _minPledge, uint64 _endDateUtc, uint64 _daysPerCheck) external {
+    function setConditions(uint _minPledge, uint _milesPerWeek, uint _endDateUtc, uint _daysPerCheck) external {
         // Check that we haven't started the Pact
         require(state == PactState.Pending, "Pact is not allowing anymore pledges!");
         // Check that the caller is the actual host
@@ -113,10 +114,11 @@ contract Pact is Ownable, AccessControl {
         minPledge = _minPledge;
         endDateUtc = _endDateUtc;
         daysPerCheck = _daysPerCheck;
+        milesPerWeek = _milesPerWeek;
     }
 
-    function getConditions() external view returns (uint256, uint256, uint256) {
-        return (minPledge, endDateUtc, daysPerCheck);
+    function getConditions() external view returns (uint, uint, uint, uint) {
+        return (minPledge, milesPerWeek, endDateUtc, daysPerCheck);
     }
 
     // Deposit the amount of ether sent from sender
@@ -138,6 +140,15 @@ contract Pact is Ownable, AccessControl {
     function _generateInviteCode() internal view returns (string memory) {
         require(state == PactState.Pending, "Pact is already started or finished can't invite more people");
         return "Hello!!";
+    }
+
+    function addParticipant(address participant) public onlyOwner {
+        require(!participantMap[participant], "Participant already added!");
+        require(state == PactState.Pending, "You can't add anymore participants");
+        participantMap[participant] = true;
+        participants.push(participant);
+        _setupRole(FRIEND_ROLE, participant);
+        emit FriendJoined(participant);
     }
 
     // Make sure that they have the right invite code
