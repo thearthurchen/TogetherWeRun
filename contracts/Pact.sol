@@ -55,8 +55,10 @@ contract Pact is Ownable, AccessControl, StravaClient {
     address ORACLE_KOVAN = 0x2f90A6D021db21e1B2A077c5a37B3C7E75D15b7e;
 
     mapping ( address => mapping ( uint256 => uint256 ) ) timeToProgressIndex;
-    mapping ( address => uint8[] ) progress;
+    mapping ( address => uint256[] ) progress;
     mapping ( address => Counters.Counter ) indexes;
+    mapping ( bytes32 => address) requestIdToAddress;
+    mapping ( bytes32 => uint64) requestIdToTimestamp;
     uint minPledge;
     uint milesPerWeek;
     Counters.Counter daysUntilEnd;
@@ -233,11 +235,11 @@ contract Pact is Ownable, AccessControl, StravaClient {
         // Make sure they are actively participant
         require(hasRole(FRIEND_ROLE, msg.sender), "You are not part of the pact");
         // Request Strava Data on behalf of the user
-        // TODO we will request StravaData within Pact as it is also StravaClient?
-//        requestStravaData(msg.sender, uint64(block.timestamp));
+        bytes32 requestId = requestStravaData(msg.sender, uint64(block.timestamp));
+        requestIdToAddress[requestId] = msg.sender;
     }
 
-    function _updateProgress(address user, uint timestamp, uint8 distance) internal {
+    function _updateProgress(address user, uint timestamp, uint256 distance) internal {
         require(indexes[user].current() > 0, "You were not initialized somehow");
         require(timestamp > 0, "Can't use zero timestamp");
         // We floor the timestamp to the start of day so that multiple updates
@@ -260,11 +262,11 @@ contract Pact is Ownable, AccessControl, StravaClient {
     }
 
     // TODO (TANNER) just check this
-//    function fulfill(bytes32 requestId, address user, uint timestamp, uint8 distance) public override recordChainlinkFulfillment(requestId){
-//        // Make sure that we're in the Started state
-//        require(state == PactState.Started, "Pact must be started for any progress updates");
-//        _updateProgress(user, timestamp, distance);
-//    }
+    function fulfill(bytes32 requestId, uint256 distance) public override recordChainlinkFulfillment(requestId){
+        // Make sure that we're in the Started state
+        require(state == PactState.Started, "Pact must be started for any progress updates");
+        _updateProgress(requestIdToAddress[requestId], requestIdToTimestamp[requestId], distance);
+    }
 
     // Make sure that the goal is complete for each participant
     function _checkComplete() internal returns (bool) {

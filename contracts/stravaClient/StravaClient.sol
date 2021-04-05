@@ -8,13 +8,10 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 // TODO Pact will become StravaClient
 contract StravaClient is Ownable, ChainlinkClient {
 
-    uint256 public distance;
-
     // Chainlink Stuff
     address private oracle;
     bytes32 private jobId;
     uint256 private externalAdapterFee;
-
 
     /**
     * ExternalAdapter
@@ -76,7 +73,6 @@ contract StravaClient is Ownable, ChainlinkClient {
      * @dev
      * Receive the response in the form of uint256
      */
-    function fulfill(bytes32 _requestId, uint256 _distance) public virtual {
-        distance = _distance;
+    function fulfill(bytes32 requestId, uint256 distance) public virtual {
     }
 }
