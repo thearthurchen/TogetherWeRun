@@ -1,4 +1,4 @@
-import React, {useState} from "react";
+import React, { useState, useEffect } from "react";
 import { getDefaultProvider } from "@ethersproject/providers";
 import { useQuery } from "@apollo/react-hooks";
 import { ethers } from "ethers";
@@ -26,6 +26,20 @@ function WalletButton({ provider, loadWeb3Modal, logoutOfWeb3Modal, signedInAddr
   );
 }
 
+function PactView() {
+
+  useEffect(()=> {
+
+  }, [])
+
+
+  return(
+    <div>
+      hi
+    </div>
+  )
+}
+
 function App() {
   const { loading, error, data } = useQuery(GET_TRANSFERS);
   const [provider, loadWeb3Modal, logoutOfWeb3Modal, signedInAddress, roles] = useWeb3Modal();
@@ -33,21 +47,24 @@ function App() {
   const [pledgeAmount, setPledgeAmount] = useState(0);
   const [endDate, setEndDate] = useState(Date.now());
   const [daysPerCheck, setDaysPerCheck] = useState(0);
+  const [pactAddress, setPactAddress] = useState(null);
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (!loading && !error && data && data.transfers) {
       console.log({ transfers: data.transfers });
       console.log('provider:', provider)
       console.log('signedInAddress:', signedInAddress)
       console.log('roles:', roles)
     }
-    // async function setup () {
-    //   const _provider = await ethers.provider;
-    //   console.log(_provider);
-    //   setProvider(_provider);
-    //   console.log(await ethers.getSigners());
-    // }
-    // setup();
+    async function renderPactView() {
+      try {
+        // const pactAddress = await gateway.getMyPact();
+        // setPactAddress(pactAddress);
+      } catch (e) {
+        // Do nothing because they haven't created/joined pact
+      }
+    }
+    renderPactView();
   }, [loading, error, data]);
 
   const handleCreatePact = () =>{
@@ -57,8 +74,12 @@ function App() {
   const submitCreatePact = async () => {
     console.log(pledgeAmount, endDate, daysPerCheck)
     //TODO: create and set unique invite code
-    await createPact(provider, 'hello')
-    await setConditions(provider, '0xB7A5bd0345EF1Cc5E66bf61BdeC17D2461fBd968', 20, Date.parse("12/12/2050"), 50);
+    try {
+      const pactAddress = await createPact(provider, 'hello');
+      // TODO: add the router path
+    } catch(e) {
+      console.log(e);
+    }
   }
 
   return (

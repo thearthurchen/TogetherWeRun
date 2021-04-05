@@ -17,11 +17,6 @@ const Modal = ({show, onClose, onSubmit, title, children}) => {
     }
   }, [])
 
-
-  // if(!show){
-  //   return null;
-  // }
-
   return ReactDOM.createPortal(
     <CSSTransition
       in={show}

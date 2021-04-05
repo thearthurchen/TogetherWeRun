@@ -34,18 +34,23 @@ export async function myPact(provider) {
 
 // TODO: Create invite code function to pass in
 export async function createPact(provider, inviteCode) {
-  const signer = provider.getSigner();
-  const gateway = new Contract(addresses.BetterTogetherGateway.address, abis.BetterTogetherGateway.abi, provider);
+  return new Promise( async (resolve, reject)=> {
+    const signer = provider.getSigner();
+    const gateway = new Contract(addresses.BetterTogetherGateway.address, abis.BetterTogetherGateway.abi, provider);
+    let subscriber;
+    try {
+      await gateway.connect(signer).createPact(inviteCode);
+      subscriber = gateway.on("PactJoined", (host, pactAddress, event)=> {
+        console.log(`${host} created pact with pact id: ${pactAddress}`);
+        console.log(event);
+        resolve(pactAddress);
+        subscriber.unsubscribe();
+      })
+    } catch (e) {
+      reject(e);
+    }
+  })
 
-  try {
-    await gateway.connect(signer).createPact(inviteCode);
-    gateway.on("PactCreated", (host, id, event)=> {
-      console.log(`${host} created pact with pact id: ${id}`)
-      console.log(event)
-    })
-  } catch (e) {
-    console.log(e);
-  }
 }
 
 export async function setConditions(provider, pactAddress, minPledge, endDate, daysPerCheck ) {
@@ -60,14 +65,15 @@ export async function setConditions(provider, pactAddress, minPledge, endDate, d
   }
 }
 
-export async function joinPact(provider, pactAddress, hostAddress, inviteCode) {
-  const pact = new Contract(pactAddress, abis.Pact.abi, provider);
+// It is now from gateway.connect also emits pact address
+export async function joinPact(provider, hostAddress, inviteCode) {
+  const gateway = new Contract(addresses.BetterTogetherGateway.address, abis.BetterTogetherGateway.abi, provider);
   const signer = provider.getSigner();
 
   try {
     // joinPact(hostAddress, inviteCode)
-    await pact.connect(signer).joinPact('0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266', inviteCode);
-    pact.on("Deposited", (from, value)=> {
+    await gateway.connect(signer).joinPact(hostAddress, inviteCode);
+    gateway.on("PactJoined", (from, )=> {
       console.log(`${from} joined pact and sent ${value}`);
     })
   } catch(e) {
