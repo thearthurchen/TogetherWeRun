@@ -39,7 +39,7 @@ describe('BetterTogetherGateway', function () {
   })
 
   it('Should only be able to create once per sender and get invite code', async function () {
-    // Create a Better Together
+    // Create a Pact
     await gateway.createPact('test')
     try {
       await gateway.createPact('test')
@@ -56,7 +56,7 @@ describe('BetterTogetherGateway', function () {
   })
 
   it('Should be able to have set pact conditions if owner', async function () {
-    // Create a Better Together
+    // Create a Pact
     await gateway.connect(friend4).createPact('test')
     // Get the Pact
     const pactAddress = await gateway.connect(friend4).getMyPact()
@@ -76,7 +76,7 @@ describe('BetterTogetherGateway', function () {
   })
 
   it('Should be able to invite others to pact and they cant change conditions', async function () {
-    // Create a Better Together
+    // Create a Pact
     await gateway.connect(host).createPact('test')
     const pactAddress = await gateway.connect(host).getMyPact()
     // Get the pact contract
@@ -95,7 +95,7 @@ describe('BetterTogetherGateway', function () {
     expect(participants).to.be.length(4)
     await Promise.all(
       allMyFriends.map(async (friend) => {
-        expect(await gateway.connect(friend).getMyPact()).to.equal(pactAddress);
+        expect(await gateway.connect(friend).getMyPact()).to.equal(pactAddress)
       })
     )
     // None of my amazing friends should be able to set the conditions
@@ -117,7 +117,7 @@ describe('BetterTogetherGateway', function () {
   it('Shouldnt allow non friends or hosts to interact with Pact', async function () {})
 
   it('Escrow holds the correct amount after make pledge', async function () {
-    // Create a Better Together
+    // Create a Pact
     await gateway.connect(host).createPact('test')
     // We get the inviteCode and address of pact and create new instance to contract
     const pactAddress = await gateway.connect(host).getMyPact()
@@ -151,7 +151,7 @@ describe('BetterTogetherGateway', function () {
   })
 
   it('Only owner of escrow (the gateway) should be able to call refund pledges', async function () {
-    // Create a Better Together
+    // Create a Pact
     await gateway.connect(host).createPact('test')
     // We get the inviteCode and address of pact and create new instance to contract
     const pactAddress = await gateway.connect(host).getMyPact()
@@ -194,7 +194,7 @@ describe('BetterTogetherGateway', function () {
   })
 
   it('Only owner of escrow (the gateway) should be able to withdraw pledges', async function () {
-    // Create a Better Together
+    // Create a Pact
     await gateway.connect(host).createPact('test')
     // We get the inviteCode and address of pact and create new instance to contract
     const pactAddress = await gateway.connect(host).getMyPact()
