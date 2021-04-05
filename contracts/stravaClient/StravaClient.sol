@@ -15,6 +15,7 @@ contract StravaClient is Ownable, ChainlinkClient {
     bytes32 private jobId;
     uint256 private externalAdapterFee;
 
+
     /**
     * ExternalAdapter
     * Network: Kovan

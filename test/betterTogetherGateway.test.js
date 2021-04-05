@@ -91,6 +91,7 @@ describe('BetterTogetherGateway', function () {
     )
     // We expect 4 participants
     const participants = await pact.connect(host).getParticipants()
+    console.log(participants)
     expect(participants).to.be.length(4)
     await Promise.all(
       allMyFriends.map(async (friend) => {

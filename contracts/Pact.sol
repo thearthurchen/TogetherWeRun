@@ -154,18 +154,6 @@ contract Pact is Ownable, AccessControl, StravaClient {
         emit FriendJoined(participant);
     }
 
-    // HOW DO DEFAULT WORKS WITH COUNTERS AND STUFF
-    function testAddingStruct()  external {
-        // ADD THEM TO THE GOAL
-        require(progress[msg.sender].length == 0, "You already got added somehow");
-        // Create some fake progress
-        progress[msg.sender].push(0);
-        // Set current block.timestamp to index current ie. 0 because we just added
-        timeToProgressIndex[msg.sender][0] = indexes[msg.sender].current();
-        // Increment counter
-        indexes[msg.sender].increment();
-    }
-
     // @dev get who the host is for this pact
     function getHost() external view returns (address) {
         require(hasRole(FRIEND_ROLE, msg.sender), "You are not part of the pact");
