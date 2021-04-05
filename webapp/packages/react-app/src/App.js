@@ -3,6 +3,8 @@ import { getDefaultProvider } from "@ethersproject/providers";
 import { useQuery } from "@apollo/react-hooks";
 import { ethers } from "ethers";
 import { Body, Button, Header, Image, Link } from "./components";
+import Modal from "./components/Modal.js";
+import ConditionsForm from "./components/ConditionsForm.js";
 import logo from "./ethereumLogo.png";
 import useWeb3Modal from "./hooks/useWeb3Modal";
 import GET_TRANSFERS from "./graphql/subgraph";
@@ -27,6 +29,10 @@ function WalletButton({ provider, loadWeb3Modal, logoutOfWeb3Modal, signedInAddr
 function App() {
   const { loading, error, data } = useQuery(GET_TRANSFERS);
   const [provider, loadWeb3Modal, logoutOfWeb3Modal, signedInAddress, roles] = useWeb3Modal();
+  const [show, setShow] = useState(false);
+  const [pledgeAmount, setPledgeAmount] = useState(0);
+  const [endDate, setEndDate] = useState(Date.now());
+  const [daysPerCheck, setDaysPerCheck] = useState(0);
 
   React.useEffect(() => {
     if (!loading && !error && data && data.transfers) {
@@ -44,17 +50,35 @@ function App() {
     // setup();
   }, [loading, error, data]);
 
+  const handleCreatePact = () =>{
+    createPact(provider, 'hello')
+  }
+
+  const submitCreatePact = async () => {
+    console.log(pledgeAmount, endDate, daysPerCheck)
+    //TODO: create and set unique invite code
+    await createPact(provider, 'hello')
+    await setConditions(provider, '0xB7A5bd0345EF1Cc5E66bf61BdeC17D2461fBd968', 20, Date.parse("12/12/2050"), 50);
+  }
+
   return (
     <div>
       <Header>
         <WalletButton provider={provider} loadWeb3Modal={loadWeb3Modal} logoutOfWeb3Modal={logoutOfWeb3Modal} signedInAddress={signedInAddress}/>
       </Header>
       <Body>
+        <Modal title="Creating Pact" onClose={()=> setShow(false)} show={show} onSubmit={submitCreatePact}>
+          <ConditionsForm
+            pledgeAmount={pledgeAmount} setPledgeAmount={setPledgeAmount}
+            endDate={endDate} setEndDate={setEndDate}
+            daysPerCheck={daysPerCheck} setDaysPerCheck={setDaysPerCheck}
+          />
+        </Modal>
         <Image src={logo} alt="react-logo" />
         <Button style={{ marginTop: "8px" }} onClick={() => myPact(provider)}>
           My Pact
         </Button>
-        <Button style={{ marginTop: "8px" }} onClick={() => createPact(provider, 'hello')}>
+        <Button style={{ marginTop: "8px" }} onClick={() => setShow(true)}>
           Create Pact
         </Button>
         <Button style={{ marginTop: "8px" }} onClick={() => setConditions(provider,'0xB7A5bd0345EF1Cc5E66bf61BdeC17D2461fBd968', 20, Date.parse("12/12/2050"), 50)}>

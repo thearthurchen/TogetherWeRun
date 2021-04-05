@@ -52,3 +52,57 @@ export const Button = styled.button`
     outline: none;
   }
 `;
+
+export const StyledModal = styled.div`
+  position: fixed;
+  left: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: all 0.3s ease-in-out;
+  pointer-events: none;
+
+  &.enter-done {
+    opacity: 1;
+    pointer-events: visible;
+  }
+
+  &.exit {
+    opacity: 0;
+  }
+
+  &.enter-done .modal-content {
+    transform: translateY(0);
+  }
+
+  &.exit .modal-content {
+    transform: translateY(-200px);
+  }
+
+  .modal-content {
+    width: 500px;
+    background-color: white;
+    color: black;
+    border-radius: 8px;
+    transform: translateY(-200px);
+    transition: all 0.3s ease-in-out;
+  }
+
+  .modal-header, .modal-footer {
+    padding: 10px;
+  }
+
+  .modal-body {
+    padding: 10px;
+    border-top: 1px solid black;
+    border-bottom: 1px solid black;
+  }
+`;
+
+// ${props => props.show && 'opacity: 1;'}
+// ${props => props.show && 'pointer-events: visible;'}
