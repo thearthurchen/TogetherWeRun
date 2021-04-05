@@ -9,7 +9,7 @@ import "./stravaClient/IStravaClient.sol";
 import "./stravaClient/StravaClient.sol";
 
 
-contract Pact is Ownable, AccessControl {
+contract Pact is Ownable, AccessControl, StravaClient {
 
     // Use SafeMath because its safe
     using SafeMath for uint256;
@@ -26,7 +26,7 @@ contract Pact is Ownable, AccessControl {
     // Events to listen to if we so choose to
     event Deposited(address indexed from, uint value);
     event FriendJoined(address indexed friend);
-//    event ProgressUpdated();
+    event ProgressUpdated(address indexed friend, uint256 totalDistance);
     event PactStatusChanged(PactState state);
 
     // Wallet of the gateway
@@ -37,13 +37,14 @@ contract Pact is Ownable, AccessControl {
     mapping ( address => bool ) private participantMap;
     address[] public participants;
     // Unique inviteCode for this Pact
+    // TODO arthur (make this host only)
     string public inviteCode;
     // Id of the Pact
     uint256 public id;
     // The escrow that actually holds the money
     RefundEscrow escrow;
     // The state of current Pact
-    PactState state;
+    PactState public state;
 
     // Clients that will call into our Pact
     address alarmAddress;
@@ -51,15 +52,23 @@ contract Pact is Ownable, AccessControl {
 
     // Constants
     uint256 SECONDS_IN_A_DAY = 86400;
+    address LINK_KOVAN = 0xa36085F69e2889c224210F603D836748e7dC0088;
+    address ORACLE_KOVAN = 0x2f90A6D021db21e1B2A077c5a37B3C7E75D15b7e;
 
+    // Goal Tracking
     mapping ( address => mapping ( uint256 => uint256 ) ) timeToProgressIndex;
-    mapping ( address => uint8[] ) progress;
+    mapping ( address => uint256 ) progress;
+    mapping ( address => uint256[] ) progressV2;
     mapping ( address => Counters.Counter ) indexes;
-    uint256 minPledge;
+    mapping ( bytes32 => address) requestIdToAddress;
+    mapping ( bytes32 => uint256) requestIdToTimestamp;
+    uint minPledge;
+    uint totalMiles;
     Counters.Counter daysUntilEnd;
-    uint256 startDateUtc;
-    uint256 endDateUtc;
-    uint256 daysPerCheck;
+    uint startDateUtc;
+    uint endDateUtc;
+    uint daysPerCheck;
+
 
     // @dev borrowed from
     // https://medium.com/@ethdapp/using-the-openzeppelin-escrow-library-6384f22caa99
@@ -69,7 +78,7 @@ contract Pact is Ownable, AccessControl {
         address _host,
         uint256 _id,
         string memory _inviteCode
-    ) public  {
+    ) StravaClient(LINK_KOVAN, ORACLE_KOVAN) public  {
         // Set the params we need for this Pact
         wallet = _wallet;
         host = _host;
@@ -84,6 +93,8 @@ contract Pact is Ownable, AccessControl {
         // Grant the host HOST_ROLE and FRIEND_ROLE
         _setupRole(HOST_ROLE, _host);
         _setupRole(FRIEND_ROLE, _host);
+        // Make host a participant
+        participants.push(_host);
         // Set alarm clock to the alarm clients based on provided addresses
 //        alarmClient = IAlarmClient(_alarmAddress);
 //        alarmAddress = _alarmAddress;
@@ -103,8 +114,14 @@ contract Pact is Ownable, AccessControl {
         return diff / SECONDS_IN_A_DAY;
     }
 
+    function getInviteCode() external returns (string memory) {
+        // Check that the caller is the actual host
+        require(hasRole(HOST_ROLE, msg.sender), "Caller is not a host");
+        return inviteCode;
+    }
+
     // @dev setter and getter for conditions
-    function setConditions(uint256 _minPledge, uint64 _endDateUtc, uint64 _daysPerCheck) external {
+    function setConditions(uint _minPledge, uint _totalMiles, uint _endDateUtc, uint _daysPerCheck) external {
         // Check that we haven't started the Pact
         require(state == PactState.Pending, "Pact is not allowing anymore pledges!");
         // Check that the caller is the actual host
@@ -113,10 +130,11 @@ contract Pact is Ownable, AccessControl {
         minPledge = _minPledge;
         endDateUtc = _endDateUtc;
         daysPerCheck = _daysPerCheck;
+        totalMiles = _totalMiles;
     }
 
-    function getConditions() external view returns (uint256, uint256, uint256) {
-        return (minPledge, endDateUtc, daysPerCheck);
+    function getConditions() external view returns (uint, uint, uint, uint) {
+        return (minPledge, totalMiles, endDateUtc, daysPerCheck);
     }
 
     // Deposit the amount of ether sent from sender
@@ -140,34 +158,15 @@ contract Pact is Ownable, AccessControl {
         return "Hello!!";
     }
 
-    // Make sure that they have the right invite code
-    // TODO combine this w/ makePact
-    function joinPact(address _host, string memory _inviteCode) external payable {
-        // Checks to make sure Pact is in good state and the caller is calling the right Pact
-        require(!participantMap[msg.sender], "Participant already added!");
+    function addParticipant(address participant) public onlyOwner {
+        require(!participantMap[participant], "Participant already added!");
         require(state == PactState.Pending, "You can't add anymore participants");
-        require(host == _host && _compareStringsByBytes(inviteCode, _inviteCode), "Invalid host or code");
-        participantMap[msg.sender] = true;
-        participants.push(msg.sender);
-        // Give the participant FRIEND_ROLE
-        _setupRole(FRIEND_ROLE, msg.sender);
-        // TAKE THEIR MONEY
-        require(msg.sender.balance >= minPledge, "You need to pledge a bit more to be better together");
-        // Deposit into our escrow
-        escrow.deposit{value: msg.value}(wallet);
-        emit Deposited(msg.sender, msg.value);
-    }
-
-    // HOW DO DEFAULT WORKS WITH COUNTERS AND STUFF
-    function testAddingStruct()  external {
-        // ADD THEM TO THE GOAL
-        require(progress[msg.sender].length == 0, "You already got added somehow");
-        // Create some fake progress
-        progress[msg.sender].push(0);
-        // Set current block.timestamp to index current ie. 0 because we just added
-        timeToProgressIndex[msg.sender][0] = indexes[msg.sender].current();
-        // Increment counter
-        indexes[msg.sender].increment();
+        // Update the tracking + role
+        participantMap[participant] = true;
+        participants.push(participant);
+        _setupRole(FRIEND_ROLE, participant);
+        // Emit that a friend joined
+        emit FriendJoined(participant);
     }
 
     // @dev get who the host is for this pact
@@ -219,21 +218,22 @@ contract Pact is Ownable, AccessControl {
         return participants;
     }
 
-//    // Returns the whole struct of goal back???
-//    function getProgress() external view returns (Goal memory) {
-//        return goal;
-//    }
+    // Returns the whole struct of goal back???
+    function getProgress(address user) external view returns (uint256) {
+        require(hasRole(FRIEND_ROLE, msg.sender), "You are not part of the pact");
+        return progress[user];
+    }
 
     // Is the pact complete
     function isPactComplete() external view returns (bool) {
-        return state == PactState.Finished;
+        return _checkComplete();
     }
 
     function startPact() external {
         require(hasRole(HOST_ROLE, msg.sender), "You must be the host");
         // Escrow is Active on creation
         // State must be Refund or Closed for any refund or beneficiary withdrawal
-        alarmClient.setAlarm(address(this), endDateUtc);
+//        alarmClient.setAlarm(address(this), endDateUtc);
         state = PactState.Started;
         // Set the number of days left in goal
         startDateUtc = block.timestamp;
@@ -243,18 +243,21 @@ contract Pact is Ownable, AccessControl {
         daysUntilEnd._value = _getDaysBetween(block.timestamp, endDateUtc);
     }
 
-    // This would probably call the StravaClient to update the progress
+    // This would probably call the StravaClient to update the progressV2
     // For all the participants
     function updateProgress() external {
         // Make sure they are actively participant
         require(hasRole(FRIEND_ROLE, msg.sender), "You are not part of the pact");
         // Request Strava Data on behalf of the user
-        // TODO we will request StravaData within Pact as it is also StravaClient?
-//        requestStravaData(msg.sender, uint64(block.timestamp));
+        bytes32 requestId = requestStravaData(msg.sender, uint64(block.timestamp));
+        requestIdToAddress[requestId] = msg.sender;
     }
 
-    function _updateProgress(address user, uint timestamp, uint8 distance) internal {
-        require(indexes[user].current() > 0, "You were not initialized somehow");
+    // ???
+    function _updateProgress(address user, uint256 timestamp, uint256 distance) public onlyOwner {
+        // Make sure that we're in the Started state
+        require(state == PactState.Started, "Pact must be started for any progressV2 updates");
+        // Timestamp cant be 0
         require(timestamp > 0, "Can't use zero timestamp");
         // We floor the timestamp to the start of day so that multiple updates
         // will just update old value
@@ -262,29 +265,38 @@ contract Pact is Ownable, AccessControl {
         uint256 theDay = _floorToStartOfDay(timestamp);
         // Check if the value exists already in our timeToProgressIndex
         uint256 index = timeToProgressIndex[user][theDay];
+        // TODO arthur make our tracking more granular to make sure people dont cheat
+        // and run total miles at the end in 1 day
         // If it does exist (ie. not 0) we simply update with the new distance
         if (index > 0 ) {
-            progress[user][index] = distance;
+            progressV2[user][index] = distance;
         } else {
-            // Add the distance to the progress array
-            progress[user].push(distance);
+            // Add the distance to the progressV2 array
+            progressV2[user].push(distance);
             // Record which index it is based on timestamp
             timeToProgressIndex[user][theDay] = indexes[user].current();
             // Increment the counter
             indexes[user].increment();
         }
+        // dumb way to track for now
+        progress[user] += distance;
+        emit ProgressUpdated(user, progress[user]);
     }
 
-    // TODO (TANNER) just check this
-//    function fulfill(bytes32 requestId, address user, uint timestamp, uint8 distance) public override recordChainlinkFulfillment(requestId){
-//        // Make sure that we're in the Started state
-//        require(state == PactState.Started, "Pact must be started for any progress updates");
-//        _updateProgress(user, timestamp, distance);
-//    }
+    // Override the StravaClient method to call our _updateProgress
+    function fulfill(bytes32 requestId, uint256 distance) public override recordChainlinkFulfillment(requestId){
+        _updateProgress(requestIdToAddress[requestId], requestIdToTimestamp[requestId], distance);
+    }
 
     // Make sure that the goal is complete for each participant
-    function _checkComplete() internal returns (bool) {
-        return false;
+    function _checkComplete() internal view returns (bool) {
+        // Just check the total in progress
+        for (uint i = 0; i < participants.length; i++ ) {
+            if (progress[participants[i]] < totalMiles) {
+                return false;
+            }
+        }
+        return true;
     }
 
     // Alarm clock calls this

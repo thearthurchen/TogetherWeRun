@@ -1,7 +1,5 @@
 const { Requester, Validator } = require('@chainlink/external-adapter')
 
-const { getStravaDistance } = require('./strava')
-
 // Define custom error scenarios for the API.
 // Return true for the adapter to retry.
 const customError = (data) => {
@@ -18,7 +16,7 @@ const customParams = {
   timestamp: ['timestamp']
 }
 
-const createRequest = async (input, callback) => {
+const createRequest = (input, callback) => {
   // The Validator helps you validate the Chainlink request data
   const validator = new Validator(callback, input, customParams)
   const jobRunID = validator.validated.id
@@ -30,7 +28,7 @@ const createRequest = async (input, callback) => {
   const response = {
     status: 200,
     data: {
-      distance: await getStravaDistance(user, timestamp),
+      distance: 1.5,
       user,
       timestamp
     }
