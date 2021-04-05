@@ -66,5 +66,10 @@ describe('Pact tests', function () {
       console.log(await pact.connect(host).getProgress(friend))
       expect(await pact.connect(host).getProgress(friend)).to.equal(fakeProgress[friend])
     }))
+    // Finish the pact
+    await pact.connect(owner).finishPact();
+    // Pact should be finished
+
+    // But refunds should not be enabled because no one finished their goals
   })
 })
