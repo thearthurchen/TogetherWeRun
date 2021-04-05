@@ -165,7 +165,7 @@ contract Pact is Ownable, AccessControl, StravaClient {
         participantMap[participant] = true;
         participants.push(participant);
         _setupRole(FRIEND_ROLE, participant);
-        //
+        // Emit that a friend joined
         emit FriendJoined(participant);
     }
 
@@ -226,7 +226,7 @@ contract Pact is Ownable, AccessControl, StravaClient {
 
     // Is the pact complete
     function isPactComplete() external view returns (bool) {
-        return state == PactState.Finished;
+        return _checkComplete();
     }
 
     function startPact() external {
@@ -289,7 +289,7 @@ contract Pact is Ownable, AccessControl, StravaClient {
     }
 
     // Make sure that the goal is complete for each participant
-    function _checkComplete() internal returns (bool) {
+    function _checkComplete() internal view returns (bool) {
         // Just check the total in progress
         for (uint i = 0; i < participants.length; i++ ) {
             if (progress[participants[i]] < totalMiles) {
