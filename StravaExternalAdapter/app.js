@@ -11,7 +11,7 @@ const port = process.env.EA_PORT || 8080
 
 app.use(bodyParser.json());
 
-app.post('/get_athlete_activity/:id', (req, res) => {
+app.post('/get-athlete-activity/:id', (req, res) => {
   const { id } = req.params
 
   createRefreshTokenRequest({ data: { userAddress: id } }, (status, result) => {
