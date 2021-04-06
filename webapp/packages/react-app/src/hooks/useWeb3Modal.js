@@ -40,11 +40,16 @@ function useWeb3Modal(config = {}) {
     const newProvider = await web3Modal.connect();
     setProvider(new Web3Provider(newProvider));
     setSignedInAddress(newProvider.selectedAddress);
+    // Subscribing to accounts changed https://github.com/Web3Modal/web3modal
+    newProvider.on("accountsChanged", (accounts) => {
+      console.log(accounts);
+      setSignedInAddress(accounts[0]);
+    });
   }, [web3Modal]);
 
   // getRoles(provider, pactAddress)
   async function fetchRoles() {
-    setRoles(await getRoles(provider, '0xB7A5bd0345EF1Cc5E66bf61BdeC17D2461fBd968'));
+    // setRoles(await getRoles(provider, '0xB7A5bd0345EF1Cc5E66bf61BdeC17D2461fBd968'));
   };
 
   const logoutOfWeb3Modal = useCallback(
@@ -65,7 +70,7 @@ function useWeb3Modal(config = {}) {
   }, [autoLoad, autoLoaded, loadWeb3Modal, setAutoLoaded, web3Modal.cachedProvider]);
 
   useEffect(() => {
-    fetchRoles();
+    // fetchRoles();
   }, [signedInAddress]);
 
   return [provider, loadWeb3Modal, logoutOfWeb3Modal, signedInAddress, roles];

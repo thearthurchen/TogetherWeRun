@@ -1,6 +1,6 @@
 import React, {useState, useEffect} from "react";
 
-const ConditionsForm = ({pledgeAmount, setPledgeAmount, endDate, setEndDate, daysPerCheck, setDaysPerCheck}) =>{
+const ConditionsForm = ({pledgeAmount, setPledgeAmount, totalMiles, setTotalMiles, endDate, setEndDate, daysPerCheck, setDaysPerCheck}) =>{
 
   return(
     <form>
@@ -16,10 +16,21 @@ const ConditionsForm = ({pledgeAmount, setPledgeAmount, endDate, setEndDate, day
       </label>
       <br/>
       <label>
+        Total Miles:
+        <input
+        name="totalMiles"
+        type="number"
+        value={totalMiles}
+        onChange={e => setTotalMiles(e.target.value) }
+        >
+        </input>
+      </label>
+      <br/>
+      <label>
         End Date:
         <input
         name="endDate"
-        type="number"
+        type="text"
         value={endDate}
         onChange={e => setEndDate(e.target.value) }
         >
