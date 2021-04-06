@@ -1,4 +1,4 @@
-import React, {useState, useEffect} from "react";
+import React from "react";
 
 const ConditionsForm = ({pledgeAmount, setPledgeAmount, totalMiles, setTotalMiles, endDate, setEndDate, daysPerCheck, setDaysPerCheck}) =>{
 

@@ -35,7 +35,7 @@ export async function getMyPact(provider) {
 
 // TODO: Create invite code function to pass in
 export async function createPact(provider, inviteCode) {
-  return new Promise( async (resolve, reject)=> {
+  return new Promise( async (resolve, reject) => {
     const signer = provider.getSigner();
     const gateway = new Contract(addresses.BetterTogetherGateway.address, abis.BetterTogetherGateway.abi, provider);
     let subscriber;
@@ -51,7 +51,18 @@ export async function createPact(provider, inviteCode) {
       reject(e);
     }
   })
+}
 
+export async function getPactState(provider, pactAddress) {
+  return new Promise( async (resolve, reject) => {
+    const pact = new Contract(pactAddress, abis.Pact.abi, provider);
+    try {
+      const pactState = await pact.state();
+      resolve(pactState);
+    } catch(e) {
+      reject(e);
+    }
+  })
 }
 
 // TODO: return conditions after they are set
@@ -85,7 +96,9 @@ export async function joinPact(provider, hostAddress, inviteCode) {
 
 export async function getConditions(provider, pactAddress) {
   const pact = new Contract(pactAddress, abis.Pact.abi, provider);
-  console.log(await pact.state());
+  const host = await pact.getHost();
+  console.log('host', host);
+
   try {
     const conditions = await pact.getConditions();
     const parsedConditions = [conditions[0].toNumber(), conditions[1].toNumber(), conditions[2].toNumber(), new Date(conditions[2].toNumber()).toLocaleString(), conditions[3].toNumber()];
@@ -95,15 +108,9 @@ export async function getConditions(provider, pactAddress) {
   }
 }
 
-export async function getPactState(provider, pactAddress) {
-  const pact = new Contract(pactAddress, abis.Pact.abi, provider);
-  try {
-    const pactState = await pact.state();
-    return pactState;
-  } catch(e) {
-    console.log(e);
-  }
-}
+
+
+
 
 export async function startPact(provider, pactAddress){
   const pact = new Contract(pactAddress, abis.Pact.abi, provider);

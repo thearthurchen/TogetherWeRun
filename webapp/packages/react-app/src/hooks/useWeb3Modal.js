@@ -42,7 +42,7 @@ function useWeb3Modal(config = {}) {
     setSignedInAddress(newProvider.selectedAddress);
     // Subscribing to accounts changed https://github.com/Web3Modal/web3modal
     newProvider.on("accountsChanged", (accounts) => {
-      console.log(accounts);
+      console.log('signed in account:', accounts[0]);
       setSignedInAddress(accounts[0]);
     });
   }, [web3Modal]);
