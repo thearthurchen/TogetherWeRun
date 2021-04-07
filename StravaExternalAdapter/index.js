@@ -1,6 +1,7 @@
 /* eslint-disable standard/no-callback-literal */
 const { Requester, Validator } = require('@chainlink/external-adapter');
 const dynamoose = require('dynamoose');
+const moment = require('moment');
 
 // #region DB setup
 dynamoose.aws.sdk.config.update({
@@ -31,16 +32,22 @@ const customError = (data) => {
 const createAthleteActivityRequest = (input, cb) => {
   const customParams = {
     id: true,
-    accessToken: true
+    accessToken: true,
+    timestamp: true
   };
 
   const validator = new Validator(cb, input, customParams)
-  const { data: { id: userID, accessToken }, id: jobRunID } = validator.validated;
+  const { data: { id: userID, accessToken, timestamp }, id: jobRunID } = validator.validated;
 
-  // console.log('userID: ', userID, ' accessToken: ', accessToken);
-
+  const todayStart = moment(timestamp).startOf('day').unix();
+  const now = moment(timestamp).unix();
+  
   const config = {
-    url: `https://www.strava.com/api/v3/athletes/${userID}/stats`,
+    url: `https://www.strava.com/api/v3/athlete/activities`,
+    params: {
+      before: now,
+      after: todayStart
+    },
     headers: {
       accept: 'application/json',
       authorization: `Bearer ${accessToken}`
@@ -49,12 +56,16 @@ const createAthleteActivityRequest = (input, cb) => {
 
   Requester.request(config, customError)
     .then(response => {
-      // console.log(response.data);
+      const distance = response.data
+        .filter(item => item.type === 'Run')
+        .reduce((target, item) => {
+          return target += +item.distance
+        }, 0)
+
       Object.assign(response, {
         data: {
           result: {
-            distance: response.data.all_run_totals.distance,
-            userID
+            distance
           }
         }
       });
@@ -103,7 +114,6 @@ const createRefreshTokenRequest = (input, cb) => {
             accessToken: response.data.access_token
           })
             .then(res => {
-              // console.log(res);
               response.data.result = {
                 accessToken: response.data.access_token,
                 userID
@@ -112,19 +122,62 @@ const createRefreshTokenRequest = (input, cb) => {
               cb(response.status, Requester.success(jobRunID, response))
             })
             .catch(500, error => {
-              // console.log(error, 'error on DB update')
               cb(500, Requester.errored(jobRunID, error));
             });
         })
         .catch(error => {
-          // console.log(error, 'error on request');
           cb(500, Requester.errored(jobRunID, error));
         })
     })
     .catch(500, error => {
-      // console.log(error, 'error on DB access')
       cb(500, Requester.errored(jobRunID, error));
     });
+}
+
+const createNewUserRequest = (input, cb) => {
+  const customParams = {
+    accessCode: true
+  }
+  const validator = new Validator(cb, input, customParams)
+  const { data: { accessCode }, id: jobRunID } = validator.validated
+
+    const config = {
+      url: 'https://www.strava.com/oauth/token',
+      params: {
+        client_id: process.env.CLIENT_ID,
+        client_secret: process.env.CLIENT_SECRET,
+        code: accessCode,
+        grant_type: 'authorization_code'
+      },
+      method: 'post'
+    }
+
+    Requester.request(config, customError)
+      .then(response => {
+        if (!response || !response.data || !response.data.athlete) {
+          return cb(500, Requester.errored(jobRunID, 'no athlete data found'));
+        }
+
+        const { athlete: { username, firstname, id }, refresh_token, access_token } = response.data;
+
+        // create new user
+        const newUser = new stravaUsers({
+          userAddress: username || firstname,
+          accessToken: access_token,
+          refreshToken: refresh_token,
+          userID: '' + id
+        })
+        newUser.save()
+          .then(res => {
+            cb(response.status, res)
+          })
+          .catch(500, error => {
+            cb(500, Requester.errored(jobRunID, error));
+          });
+      })
+      .catch(error => {
+        cb(500, Requester.errored(jobRunID, error));
+      })
 }
 // #endregion
 
@@ -161,6 +214,7 @@ const handlerv2 = (event, context, callback) => {
 module.exports = {
   createAthleteActivityRequest,
   createRefreshTokenRequest,
+  createNewUserRequest,
   gcpservice,
   handler,
   handlerv2
