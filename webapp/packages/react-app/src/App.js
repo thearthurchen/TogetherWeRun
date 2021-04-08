@@ -32,27 +32,39 @@ function App() {
         // console.log('useeffect', provider);
         const pactAddress = await getMyPact(provider);
         setPactAddress(pactAddress);
+        console.log('pact', pactAddress);
+        console.log('signed', signedInAddress)
       } catch (e) {
         // Do nothing because they haven't created/joined pact
         // console.log("use effect error")
       }
     }
     setup(provider);
-  },[signedInAddress])
-
-  const handleCreatePact = () =>{
-    createPact(provider, 'hello')
-  }
+  },[signedInAddress, provider])
 
   return (
     <>
       <Header>
-        <WalletButton provider={provider} loadWeb3Modal={loadWeb3Modal} logoutOfWeb3Modal={logoutOfWeb3Modal} signedInAddress={signedInAddress}/>
+        <WalletButton
+          provider={provider}
+          loadWeb3Modal={loadWeb3Modal}
+          logoutOfWeb3Modal={logoutOfWeb3Modal}
+          signedInAddress={signedInAddress}
+        />
       </Header>
       <Body>
         {pactAddress
-          ? <PactView provider= {provider} pactAddress={pactAddress} signedInAddress={signedInAddress}/>
-          : <GatewayView provider={provider} setPactAddress={setPactAddress} signedInAddress={signedInAddress} logo={logo}/>
+          ? <PactView
+              provider={provider}
+              pactAddress={pactAddress}
+              signedInAddress={signedInAddress}
+            />
+          : <GatewayView
+              provider={provider}
+              setPactAddress={setPactAddress}
+              signedInAddress={signedInAddress}
+              logo={logo}
+            />
         }
       </Body>
     </>

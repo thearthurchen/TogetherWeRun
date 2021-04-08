@@ -25,7 +25,7 @@ export async function getMyPact(provider) {
   const signer = provider.getSigner();
   try {
     const pactAddress = await gateway.connect(signer).getMyPact();
-    console.log('Pact Address', pactAddress);
+    // console.log('Pact Address', pactAddress);
     return pactAddress;
   } catch(e) {
     console.log(e);
@@ -38,66 +38,69 @@ export async function createPact(provider, inviteCode) {
   return new Promise( async (resolve, reject) => {
     const signer = provider.getSigner();
     const gateway = new Contract(addresses.BetterTogetherGateway.address, abis.BetterTogetherGateway.abi, provider);
-    let subscriber;
     try {
-      await gateway.connect(signer).createPact(inviteCode);
-      subscriber = gateway.on("PactJoined", (host, pactAddress, event)=> {
+      gateway.once("PactJoined", (host, pactAddress, event)=> {
         console.log(`${host} created pact with pact id: ${pactAddress}`);
         console.log(event);
+        gateway.removeAllListeners();
         resolve(pactAddress);
-        subscriber.off("PactJoined")
       })
+      await gateway.connect(signer).createPact(inviteCode)
     } catch (e) {
       reject(e);
     }
   })
 }
 
-export async function getPactState(provider, pactAddress) {
-  return new Promise( async (resolve, reject) => {
-    const pact = new Contract(pactAddress, abis.Pact.abi, provider);
+// It is now from gateway.connect also emits pact address
+export async function joinPact(provider, hostAddress, inviteCode) {
+  return new Promise( async (resolve, reject) =>{
+    const gateway = new Contract(addresses.BetterTogetherGateway.address, abis.BetterTogetherGateway.abi, provider);
+    const signer = provider.getSigner();
     try {
-      const pactState = await pact.state();
-      resolve(pactState);
+      gateway.on("PactJoined", (from, pactAddress, event )=> {
+        console.log(`${from} joined pact ${pactAddress}`);
+        console.log(event);
+        gateway.removeAllListeners();
+        resolve(pactAddress);
+      })
+      const tx = await gateway.connect(signer).joinPact(hostAddress, inviteCode);
     } catch(e) {
       reject(e);
     }
   })
 }
 
+export async function getPactState(provider, pactAddress) {
+    const pact = new Contract(pactAddress, abis.Pact.abi, provider);
+    const signer = provider.getSigner();
+    try {
+      const pactState = await pact.connect(signer).state();
+      console.log('pact state', pactState)
+      const host = await pact.connect(signer).getHost();
+      console.log('pact host', host);
+      return [host, pactState];
+    } catch(e) {
+      console.log(e);
+    }
+}
+
+
 // TODO: return conditions after they are set
 export async function setConditions(provider, pactAddress, minPledge, totalMiles, endDate, daysPerCheck ) {
   const signer = provider.getSigner();
   const pact = new Contract(pactAddress, abis.Pact.abi, provider);
   try {
-    await pact.connect(signer).setConditions(minPledge, totalMiles, endDate, daysPerCheck);
-    // const conditions = await pact.getConditions();
-    // console.log(conditions[0].toNumber(), conditions[1].toNumber(), new Date(conditions[2].toNumber()).toLocaleString(), conditions[3].toNumber())
+    const tx = await pact.connect(signer).setConditions(minPledge, totalMiles, endDate, daysPerCheck);
+    const receipt = await tx.wait();
+    return receipt;
   } catch(e) {
     console.log(e);
   }
-}
-
-// It is now from gateway.connect also emits pact address
-export async function joinPact(provider, hostAddress, inviteCode) {
-  const gateway = new Contract(addresses.BetterTogetherGateway.address, abis.BetterTogetherGateway.abi, provider);
-  const signer = provider.getSigner();
-
-  try {
-    await gateway.connect(signer).joinPact(hostAddress, inviteCode);
-    gateway.on("PactJoined", (from, pactAddress )=> {
-      console.log(`${from} joined pact ${pactAddress}`);
-    })
-  } catch(e) {
-    console.log(e);
-  }
-
 }
 
 export async function getConditions(provider, pactAddress) {
   const pact = new Contract(pactAddress, abis.Pact.abi, provider);
-  const host = await pact.getHost();
-  console.log('host', host);
 
   try {
     const conditions = await pact.getConditions();
@@ -108,16 +111,14 @@ export async function getConditions(provider, pactAddress) {
   }
 }
 
-
-
-
-
 export async function startPact(provider, pactAddress){
   const pact = new Contract(pactAddress, abis.Pact.abi, provider);
   const signer = provider.getSigner();
   try {
-    await pact.connect(signer).startPact();
-    console.log("started pact")
+    const tx = await pact.connect(signer).startPact();
+    const receipt = await tx.wait();
+    console.log("started pact", receipt)
+    return 1;
   } catch (e) {
     console.log(e);
   }

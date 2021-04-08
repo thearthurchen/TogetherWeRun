@@ -5,29 +5,36 @@ import { Button, Image } from '.'
 import { ethers } from "ethers";
 import { getMyPact, createPact, setConditions, joinPact } from '../contractFunctions.js';
 
-function GatewayView({ provider, signedInAddress, setPactAddress, logo }) {
+const GatewayView = ({ provider, setPactAddress, signedInAddress, logo }) => {
   const [show, setShow] = useState(false);
   const [pledgeAmount, setPledgeAmount] = useState(0);
-  const [endDate, setEndDate] = useState(Date.now());
+  const [endDate, setEndDate] = useState('10/10/22');
   const [daysPerCheck, setDaysPerCheck] = useState(0);
   const [totalMiles, setTotalMiles] = useState(0);
 
-  const submitCreatePact = async () => {
+  const submitCreatePact = async (provider, pledgeAmount, totalMiles, endDate, daysPerCheck) => {
     // console.log(pledgeAmount, endDate, daysPerCheck);
     //TODO: create and set unique invite code
     try {
       const pactAddress = await createPact(provider, 'hello');
-      await setConditions(provider, pactAddress, pledgeAmount, totalMiles, endDate, daysPerCheck)
+      console.log(pactAddress, signedInAddress)
+      await setConditions(provider, pactAddress, pledgeAmount, totalMiles, Date.parse(endDate), daysPerCheck)
       setPactAddress(pactAddress);
     } catch(e) {
       console.log(e);
     }
   }
 
+  const handleJoinPact = async (provider, hostAddress, inviteCode) => {
+    const pactAddress = await joinPact(provider, ethers.utils.getAddress('0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266'), 'hello');
+    console.log(pactAddress);
+    setPactAddress(pactAddress);
+  }
+
   return(
     <>
       Gateway
-      <Modal title="Creating Pact" onClose={()=> setShow(false)} show={show} onSubmit={submitCreatePact}>
+      <Modal title="Creating Pact" onClose={()=> setShow(false)} show={show} onSubmit={()=> submitCreatePact(provider, pledgeAmount, totalMiles, endDate, daysPerCheck)}>
         <ConditionsForm
           pledgeAmount={pledgeAmount} setPledgeAmount={setPledgeAmount}
           totalMiles={totalMiles} setTotalMiles={setTotalMiles}
@@ -42,8 +49,7 @@ function GatewayView({ provider, signedInAddress, setPactAddress, logo }) {
         <Button style={{ marginTop: "8px" }} onClick={() => setShow(true)}>
           Create Pact
         </Button>
-
-        <Button style={{ marginTop: "8px" }} onClick={() => joinPact(provider, ethers.utils.getAddress('0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266'), 'hello')}>
+        <Button style={{ marginTop: "8px" }} onClick={() => handleJoinPact(provider, '', 'inviteCode')}>
           Join Pact
         </Button>
     </>
