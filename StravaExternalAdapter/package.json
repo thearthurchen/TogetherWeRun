@@ -9,7 +9,9 @@
     "start": "node app.js"
   },
   "dependencies": {
-    "@chainlink/external-adapter": "^0.2.3"
+    "@chainlink/external-adapter": "^0.2.3",
+    "dynamoose": "^2.7.3",
+    "moment": "^2.29.1"
   },
   "devDependencies": {
     "body-parser": "^1.19.0",

@@ -36,6 +36,8 @@ const createRequest = async (input, callback) => {
     }
   }
 
+  console.log(response);
+
   response.data.result = Requester.validateResultNumber(response.data, ['distance'])
   callback(response.status, Requester.success(jobRunID, response))
 }

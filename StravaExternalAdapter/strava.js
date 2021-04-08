@@ -1,3 +1,4 @@
+const { Requester, Validator } = require('@chainlink/external-adapter')
 const dynamoose = require("dynamoose");
 const moment = require("moment");
 
@@ -19,6 +20,13 @@ const stravaUsers = dynamoose.model(
   { create: false }
 );
 
+// Define custom error scenarios for the API.
+// Return true for the adapter to retry.
+const customError = (data) => {
+  if (data.Response === 'Error') return true
+  return false
+}
+
 const createAthleteActivityRequest = async (accessToken, timestamp) => {
   const todayStart = moment(timestamp).startOf("day").unix();
   const now = moment(timestamp).unix();
@@ -37,15 +45,19 @@ const createAthleteActivityRequest = async (accessToken, timestamp) => {
 
   Requester.request(config, customError)
     .then((response) => {
+      console.log('**response**', response);
+
       const distance = response.data
         .filter((item) => item.type === "Run")
         .reduce((target, item) => {
           return (target += +item.distance);
         }, 0);
 
-      return { distance };
+      console.log('****', distance);
+      return distance;
     })
     .catch((error) => {
+      console.log(error);
       throw new Error(error);
     });
 };
@@ -82,8 +94,8 @@ const createRefreshTokenRequest = async (userAddress, timestamp) => {
               refreshToken: response.data.refresh_token,
               accessToken: response.data.access_token,
             })
-            .then((res) => {
-              return { accessToken };
+            .then(({ accessToken }) => {
+              return accessToken;
             })
             .catch(500, (error) => {
               throw new Error(error);
@@ -99,8 +111,8 @@ const createRefreshTokenRequest = async (userAddress, timestamp) => {
 };
 
 exports.getStravaDistance = async (user, timestamp) => {
-  const { accessToken } = await createRefreshTokenRequest(user);
-  const { distance } = await createAthleteActivityRequest(
+  const accessToken = await createRefreshTokenRequest(user);
+  const distance = await createAthleteActivityRequest(
     timestamp,
     accessToken
   );
