@@ -112,6 +112,7 @@ const createRefreshTokenRequest = async (userAddress, timestamp) => {
 
 exports.getStravaDistance = async (user, timestamp) => {
   createRefreshTokenRequest(user).then((accessToken) => {
+    console.log("accessToken", accessToken);
     createAthleteActivityRequest(timestamp, accessToken).then((distance) => {
       return distance;
     });
