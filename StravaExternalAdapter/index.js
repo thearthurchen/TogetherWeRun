@@ -24,23 +24,19 @@ const createRequest = async (input, callback) => {
   const jobRunID = validator.validated.id;
   const { user, timestamp } = validator.validated.data;
 
-  getStravaDistance(user, timestamp).then((distance) => {
-    const response = {
-      status: 200,
-      data: {
-        distance,
-        user,
-        timestamp,
-      },
-    };
+  const response = {
+    status: 200,
+    data: {
+      distance: await getStravaDistance(user, timestamp),
+      user,
+      timestamp,
+    },
+  };
 
-    console.log(response);
-
-    response.data.result = Requester.validateResultNumber(response.data, [
-      "distance",
-    ]);
-    callback(response.status, Requester.success(jobRunID, response));
-  });
+  response.data.result = Requester.validateResultNumber(response.data, [
+    "distance",
+  ]);
+  callback(response.status, Requester.success(jobRunID, response));
 };
 
 // This is a wrapper to allow the function to work with

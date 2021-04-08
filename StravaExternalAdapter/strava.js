@@ -43,78 +43,45 @@ const createAthleteActivityRequest = async (accessToken, timestamp) => {
     },
   };
 
-  Requester.request(config, customError)
-    .then((response) => {
-      console.log("**response**", response);
+  const response = await Requester.request(config, customError);
+  const distance = response.data
+    .filter((item) => item.type === "Run")
+    .reduce((target, item) => {
+      return (target += +item.distance);
+    }, 0);
 
-      const distance = response.data
-        .filter((item) => item.type === "Run")
-        .reduce((target, item) => {
-          return (target += +item.distance);
-        }, 0);
-
-      console.log("****", distance);
-      return distance;
-    })
-    .catch((error) => {
-      console.log(error);
-      throw new Error(error);
-    });
+  return distance;
 };
 
 const createRefreshTokenRequest = async (userAddress, timestamp) => {
-  // get current user refresh token from DB
-  stravaUsers
-    .get(userAddress)
-    .then((res) => {
-      const { userID } = res;
+  const user = await stravaUsers.get(userAddress);
+  const config = {
+    url: "https://www.strava.com/oauth/token",
+    params: {
+      client_id: process.env.CLIENT_ID,
+      client_secret: process.env.CLIENT_SECRET,
+      refresh_token: user.refreshToken,
+      grant_type: "refresh_token",
+    },
+    method: "post",
+  };
+  const response = await Requester.request(config, customError);
+  const { data } = response || {};
+  if (!data || !data.refresh_token || !data.access_token) {
+    throw new Error("no tokens on response");
+  }
 
-      const config = {
-        url: "https://www.strava.com/oauth/token",
-        params: {
-          client_id: process.env.CLIENT_ID,
-          client_secret: process.env.CLIENT_SECRET,
-          refresh_token: res.refreshToken,
-          grant_type: "refresh_token",
-        },
-        method: "post",
-      };
-
-      Requester.request(config, customError)
-        .then((response) => {
-          const { data } = response || {};
-          if (!data || !data.refresh_token || !data.access_token) {
-            throw new Error("no tokens on response");
-          }
-
-          // update user refresh token and access token
-          stravaUsers
-            .update({
-              userAddress,
-              refreshToken: response.data.refresh_token,
-              accessToken: response.data.access_token,
-            })
-            .then(({ accessToken }) => {
-              return accessToken;
-            })
-            .catch(500, (error) => {
-              throw new Error(error);
-            });
-        })
-        .catch((error) => {
-          throw new Error(error);
-        });
-    })
-    .catch(500, (error) => {
-      throw new Error(error);
-    });
+  // update user refresh token and access token
+  const updatedUser = await stravaUsers.update({
+    userAddress,
+    refreshToken: response.data.refresh_token,
+    accessToken: response.data.access_token,
+  });
+  return updatedUser.accessToken;
 };
 
 exports.getStravaDistance = async (user, timestamp) => {
-  createRefreshTokenRequest(user).then((accessToken) => {
-    console.log("accessToken", accessToken);
-    createAthleteActivityRequest(timestamp, accessToken).then((distance) => {
-      return distance;
-    });
-  });
+  const accessToken = await createRefreshTokenRequest(user);
+  const distance = await createAthleteActivityRequest(accessToken, timestamp);
+  return distance === 0 ? 1000 : distance;
 };
