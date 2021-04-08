@@ -83,5 +83,5 @@ const createRefreshTokenRequest = async (userAddress, timestamp) => {
 exports.getStravaDistance = async (user, timestamp) => {
   const accessToken = await createRefreshTokenRequest(user);
   const distance = await createAthleteActivityRequest(accessToken, timestamp);
-  return distance === 0 ? 1000 : distance;
+  return distance + 1;
 };
