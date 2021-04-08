@@ -1,4 +1,4 @@
-const createRequest = require('./index').createRequest
+const { createRequest, createNewUserRequest } = require('./index');
 
 const express = require('express')
 const bodyParser = require('body-parser')
@@ -14,5 +14,16 @@ app.post('/', (req, res) => {
     res.status(status).json(result)
   })
 })
+
+app.post('/create-new-user', (req, res) => {
+  const { code: accessCode } = req.body
+  createNewUserRequest(accessCode, (result) => {
+    if (result.status !== 200) {
+      return res.status(result.status).json('create user error');
+    }
+
+    return res.status(200).json('create user success');
+  });
+});
 
 app.listen(port, () => console.log(`Listening on port ${port}!`))

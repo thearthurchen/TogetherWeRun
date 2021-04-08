@@ -1,6 +1,6 @@
 const { Requester, Validator } = require("@chainlink/external-adapter");
 
-const { getStravaDistance } = require("./strava");
+const { getStravaDistance, createNewUser } = require("./strava");
 
 // Define custom error scenarios for the API.
 // Return true for the adapter to retry.
@@ -39,6 +39,14 @@ const createRequest = async (input, callback) => {
   callback(response.status, Requester.success(jobRunID, response));
 };
 
+const createNewUserRequest = async (accessCode, cb) => {
+  const response = {
+    status: await createNewUser(accessCode)
+  }
+
+  cb(response);
+}
+
 // This is a wrapper to allow the function to work with
 // GCP Functions
 exports.gcpservice = (req, res) => {
@@ -69,4 +77,7 @@ exports.handlerv2 = (event, context, callback) => {
 
 // This allows the function to be exported for testing
 // or for running in express
-module.exports.createRequest = createRequest;
+module.exports = {
+  createRequest,
+  createNewUserRequest
+};
