@@ -1,4 +1,4 @@
-const { Requester, Validator } = require('@chainlink/external-adapter')
+const { Requester, Validator } = require("@chainlink/external-adapter");
 const dynamoose = require("dynamoose");
 const moment = require("moment");
 
@@ -23,9 +23,9 @@ const stravaUsers = dynamoose.model(
 // Define custom error scenarios for the API.
 // Return true for the adapter to retry.
 const customError = (data) => {
-  if (data.Response === 'Error') return true
-  return false
-}
+  if (data.Response === "Error") return true;
+  return false;
+};
 
 const createAthleteActivityRequest = async (accessToken, timestamp) => {
   const todayStart = moment(timestamp).startOf("day").unix();
@@ -45,7 +45,7 @@ const createAthleteActivityRequest = async (accessToken, timestamp) => {
 
   Requester.request(config, customError)
     .then((response) => {
-      console.log('**response**', response);
+      console.log("**response**", response);
 
       const distance = response.data
         .filter((item) => item.type === "Run")
@@ -53,7 +53,7 @@ const createAthleteActivityRequest = async (accessToken, timestamp) => {
           return (target += +item.distance);
         }, 0);
 
-      console.log('****', distance);
+      console.log("****", distance);
       return distance;
     })
     .catch((error) => {
@@ -111,10 +111,9 @@ const createRefreshTokenRequest = async (userAddress, timestamp) => {
 };
 
 exports.getStravaDistance = async (user, timestamp) => {
-  const accessToken = await createRefreshTokenRequest(user);
-  const distance = await createAthleteActivityRequest(
-    timestamp,
-    accessToken
-  );
-  return distance;
+  createRefreshTokenRequest(user).then((accessToken) => {
+    createAthleteActivityRequest(timestamp, accessToken).then((distance) => {
+      return distance;
+    });
+  });
 };
