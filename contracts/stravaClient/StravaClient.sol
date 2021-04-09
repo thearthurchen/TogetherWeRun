@@ -8,8 +8,6 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 // TODO Pact will become StravaClient
 contract StravaClient is Ownable, ChainlinkClient {
 
-    uint256 public distance;
-
     // Chainlink Stuff
     address private oracle;
     bytes32 private jobId;
@@ -27,12 +25,11 @@ contract StravaClient is Ownable, ChainlinkClient {
     * TODO we need to move this out and use this pattern
     * https://github.com/tweether-protocol/tweether/blob/master/contracts/Tweether.sol#L69
     */
-    constructor () public {
-        setPublicChainlinkToken();
-
+    constructor (address _link, address _oracle) public {
+        setChainlinkToken(_link);
         // local node (needs to be running) listen to deployed oracle contract and
         // node configuration job id
-        oracle = 0xbE944baB39b4bf5517825AF3FC261d9B89D0331D;
+        oracle = _oracle;
         jobId = "414a4cc978d148c3add54a1c0b3534c9";
         externalAdapterFee = 0.1 * 10 ** 18; // 0.1 LINK
     }
@@ -78,7 +75,6 @@ contract StravaClient is Ownable, ChainlinkClient {
      * @dev
      * Receive the response in the form of uint256
      */
-    function fulfill(bytes32 _requestId, uint256 _distance) public virtual {
-        distance = _distance;
+    function fulfill(bytes32 requestId, uint256 distance) public virtual {
     }
 }
