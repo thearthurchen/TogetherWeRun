@@ -12,9 +12,9 @@ const PledgeView = ({ pledges }) => {
         </tr>
       </thead>
       <tbody>
-        {Object.keys(pledges).map(key => {
+        {Object.keys(pledges).map((key, idx) => {
           return (
-            <tr>
+            <tr key={idx}>
               <td>{key}</td>
               <td>{ethers.utils.formatEther(pledges[key])}</td>
             </tr>

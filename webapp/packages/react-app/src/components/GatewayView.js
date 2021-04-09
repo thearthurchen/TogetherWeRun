@@ -18,8 +18,8 @@ const GatewayView = ({ provider, setPactAddress, signedInAddress, logo }) => {
     // TODO: create and set unique invite code
     try {
       const pactAddress = await createPact(provider, 'hello')
-      console.log(pactAddress, signedInAddress)
-      await setConditions(provider, pactAddress, pledgeAmount, totalMiles, Date.parse(endDate), daysPerCheck)
+      // console.log(pactAddress, signedInAddress)
+      // await setConditions(provider, pactAddress, pledgeAmount, totalMiles, Date.parse(endDate), daysPerCheck)
       setPactAddress(pactAddress)
     } catch (e) {
       console.log(e)
