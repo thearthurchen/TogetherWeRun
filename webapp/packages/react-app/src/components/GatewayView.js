@@ -7,10 +7,10 @@ import { getMyPact, createPact, setConditions, joinPact } from '../contractFunct
 
 const GatewayView = ({ provider, setPactAddress, signedInAddress, logo }) => {
   const [show, setShow] = useState(false);
-  const [pledgeAmount, setPledgeAmount] = useState(0);
+  const [pledgeAmount, setPledgeAmount] = useState(1000000);
   const [endDate, setEndDate] = useState('10/10/22');
-  const [daysPerCheck, setDaysPerCheck] = useState(0);
-  const [totalMiles, setTotalMiles] = useState(0);
+  const [daysPerCheck, setDaysPerCheck] = useState(1);
+  const [totalMiles, setTotalMiles] = useState(40);
 
   const submitCreatePact = async (provider, pledgeAmount, totalMiles, endDate, daysPerCheck) => {
     // console.log(pledgeAmount, endDate, daysPerCheck);

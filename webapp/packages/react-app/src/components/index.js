@@ -127,11 +127,13 @@ export const StyledTable = styled.table`
   }
 
   tbody tr {
+    background-color: grey;
     border-bottom: 1px solid #dddddd;
   }
 
   tbody tr:nth-of-type(even) {
     background-color: #f3f3f3;
+    color: blue;
   }
 
   tbody tr:last-of-type {
