@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import { useLocation } from 'react-router-dom'
 import axios from 'axios'
 import { Button } from '../components'
@@ -33,11 +33,60 @@ const PactView = ({ provider, pactAddress, signedInAddress }) => {
   const [progress, setProgress] = useState([])
   const [initialized, setInitialized] = useState(false)
   // state 0: pending, 1:started, 2: finished
+  const { search } = useLocation();
+
+  const handleOAuth = useCallback(async (code) => {
+    if (!code) {
+      console.log('no access code')
+      return 400;
+    }
+
+    try {
+    console.log('code', code);
+      const response = await axios({
+        url: STRAVA_EA_NEW_USER_URL, 
+        method: 'post', 
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        data: {
+          code
+        }
+      });
+
+      console.log(response);
+      return response.status;
+    } catch (err) {
+      console.log('bad axios requeset', err);
+      return 400;
+    }
+  }, []);
+
+  const getCode = useCallback(async (code) => {
+    const OAuthStatus = await handleOAuth(code);
+    console.log('oAuthMsg', OAuthStatus);
+    return OAuthStatus;
+  }, [handleOAuth])
 
   useEffect(() => {
     // check if pending
     async function setup (provider, pactAddress) {
       try {
+        const code = new URLSearchParams(search).get('code');
+        let status;
+        if (!hasMadePostCall && Boolean(code)) {
+          hasMadePostCall = true;
+          alert('Please wait, attemping Stava authorization.')
+          window.history.replaceState({}, document.title, "/");
+          status = await getCode(code);
+
+          if (status === 200) {
+            alert('You are now signed up with Strava.')
+          } else {
+            alert('Error signing up with Strava. Please try authorizing again and make sure to allow Strava to view your activity.')
+          }
+        }
+      
         const { hostAddress, pactState } = await getPactState(provider, pactAddress)
 
         setPactState(pactState)
@@ -72,7 +121,7 @@ const PactView = ({ provider, pactAddress, signedInAddress }) => {
     if (!initialized) {
       setup(provider, pactAddress)
     }
-  }, [pactAddress, provider, signedInAddress])
+  }, [pactAddress, provider, signedInAddress, getCode, handleOAuth, search, initialized])
 
   const submitChangeConditions = async () => {
     try {
@@ -105,51 +154,6 @@ const PactView = ({ provider, pactAddress, signedInAddress }) => {
     const progress = await getProgress(provider, pactAddress)
     console.log(progress)
     setProgress(progress)
-  }
-
-  const handleOAuth = async (code) => {
-    if (!code) {
-      console.log('no access code')
-      return 400;
-    }
-
-    try {
-    console.log('code', code);
-      const response = await axios({
-        url: STRAVA_EA_NEW_USER_URL, 
-        method: 'post', 
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        data: {
-          code
-        }
-      });
-
-      return response;
-    } catch (err) {
-      console.log('bad axios requeset', err);
-      return 400;
-    }
-  }
-
-  const getCode = async (code) => {
-    const oAuthMsg = await handleOAuth(code);
-    return oAuthMsg;
-    console.log('oAuthMsg', oAuthMsg);
-  }
-
-  const { search } = useLocation();
-  const code = new URLSearchParams(search).get('code');
-
-  let status;
-  if (!hasMadePostCall && Boolean(code)) {
-    hasMadePostCall = true;
-    status = getCode(code);
-  }
-
-  if (status === 200) {
-    alert('You are now signed up with Strava.')
   }
 
   return (

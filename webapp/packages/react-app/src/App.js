@@ -40,7 +40,7 @@ function App () {
           />
         </Header>
         <>
-          {true
+          {pactAddress
             ? <PactView
               provider={provider}
               pactAddress={pactAddress}
