@@ -20,6 +20,22 @@ const stravaUsers = dynamoose.model(
   { create: false }
 );
 
+// // Keep this for creating users
+// const createUser = async () => {
+//   const userAddress = ""
+//   await stravaUsers.create({
+//     userAddress: userAddress,
+//     accessToken: "",
+//     refreshToken: "",
+//     userID: "",
+//   });
+//   console.log(
+//     await stravaUsers.get(userAddress)
+//   );
+// };
+
+createUser();
+
 // Define custom error scenarios for the API.
 // Return true for the adapter to retry.
 const customError = (data) => {
@@ -33,10 +49,10 @@ const createAthleteActivityRequest = async (accessToken, timestamp) => {
 
   const config = {
     url: `https://www.strava.com/api/v3/athlete/activities`,
-    params: {
-      before: now,
-      after: todayStart,
-    },
+    // params: {
+    //   before: "1617341344",
+    //   after: "",
+    // },
     headers: {
       accept: "application/json",
       authorization: `Bearer ${accessToken}`,
@@ -80,55 +96,48 @@ const createRefreshTokenRequest = async (userAddress, timestamp) => {
   return updatedUser.accessToken;
 };
 
+const createNewUser = async (userAddress, accessCode) => {
+  const config = {
+    url: "https://www.strava.com/oauth/token",
+    params: {
+      client_id: process.env.CLIENT_ID,
+      client_secret: process.env.CLIENT_SECRET,
+      code: accessCode,
+      grant_type: "authorization_code",
+    },
+    method: "post",
+  };
+
+  const response = await Requester.request(config, customError);
+  if (!response || !response.data || !response.data.athlete) {
+    throw new Error({
+      status: response.status,
+      msg: "no athlete data found",
+    });
+  }
+
+  const {
+    athlete: { username, firstname, id },
+    refresh_token,
+    access_token,
+  } = response.data;
+
+  // create new user
+  await stravaUsers.create({
+    userAddress,
+    accessToken: access_token,
+    refreshToken: refresh_token,
+    userID: "" + id,
+  });
+};
+
 const getStravaDistance = async (user, timestamp) => {
   const accessToken = await createRefreshTokenRequest(user);
   const distance = await createAthleteActivityRequest(accessToken, timestamp);
   return distance + 1;
 };
 
-const createNewUser = async (accessCode) => {
-  const config = {
-    url: 'https://www.strava.com/oauth/token',
-    params: {
-      client_id: process.env.CLIENT_ID,
-      client_secret: process.env.CLIENT_SECRET,
-      code: accessCode,
-      grant_type: 'authorization_code'
-    },
-    method: 'post'
-  }
-
-  try {
-    const response = await Requester.request(config, customError);
-    if (!response || !response.data || !response.data.athlete) {
-      throw new Error({
-        status: response.status,
-        msg: 'no athlete data found'
-      });
-    }
-
-    const { athlete: { username, firstname, id }, refresh_token, access_token } = response.data;
-
-    // create new user
-    const newUser = new stravaUsers({
-      userAddress: username || firstname,
-      accessToken: access_token,
-      refreshToken: refresh_token,
-      userID: '' + id
-    })
-    
-    try {
-      const saveResponse = await newUser.save();
-      return 200;
-    } catch (err) {
-      return 400
-    }
-  } catch (error) {
-    return error.status
-  }
-}
-
 module.exports = {
   createNewUser,
-  getStravaDistance
-}
+  getStravaDistance,
+};

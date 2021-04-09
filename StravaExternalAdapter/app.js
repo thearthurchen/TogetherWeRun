@@ -1,29 +1,31 @@
-const { createRequest, createNewUserRequest } = require('./index');
+const { createRequest, createNewUserRequest } = require("./index");
 
-const express = require('express')
-const bodyParser = require('body-parser')
-const app = express()
-const port = process.env.EA_PORT || 8080
+const { createNewUser } = require("./strava");
 
-app.use(bodyParser.json())
+const express = require("express");
+const bodyParser = require("body-parser");
+const app = express();
+const port = process.env.EA_PORT || 8080;
 
-app.post('/', (req, res) => {
-  console.log('POST Data: ', req.body)
+app.use(bodyParser.json());
+
+app.post("/", (req, res) => {
+  console.log("POST Data: ", req.body);
   createRequest(req.body, (status, result) => {
-    console.log('Result: ', result)
-    res.status(status).json(result)
-  })
-})
-
-app.post('/create-new-user', (req, res) => {
-  const { code: accessCode } = req.body
-  createNewUserRequest(accessCode, (result) => {
-    if (result.status !== 200) {
-      return res.status(result.status).json('create user error');
-    }
-
-    return res.status(200).json('create user success');
+    console.log("Result: ", result);
+    res.status(status).json(result);
   });
 });
 
-app.listen(port, () => console.log(`Listening on port ${port}!`))
+app.post("/create-new-user", async (req, res) => {
+  try {
+    const { userAddress, accessCode } = req.body;
+    await createNewUser(userAddress, accessCode);
+    res.json({ message: "good shit" });
+  } catch (err) {
+    console.log(err);
+    res.status(400).json({ message: err });
+  }
+});
+
+app.listen(port, () => console.log(`Listening on port ${port}!`));
