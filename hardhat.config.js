@@ -1,5 +1,6 @@
 require('@nomiclabs/hardhat-waffle')
-
+require("hardhat-deploy")
+require('dotenv').config()
 // This is a sample Hardhat task. To learn how to create your own go to
 // https://hardhat.org/guides/create-task.html
 task('accounts', 'Prints the list of accounts', async () => {
@@ -18,10 +19,15 @@ task('accounts', 'Prints the list of accounts', async () => {
 module.exports = {
   defaultNetwork: 'hardhat',
   networks: {
-    hardhat: {
+    hardhat:{
       chainId: 1337,
       allowUnlimitedContractSize: true,
       blockGasLimit: 0x1fffffffffffff
+    },
+    kovan: {
+      url: process.env.KOVAN_RPC_URL,
+      accounts: [process.env.PRIVATE_KEY],
+      saveDeployments: true
     }
   },
   solidity: '0.6.12'
