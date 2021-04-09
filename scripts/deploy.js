@@ -9,8 +9,14 @@ async function main () {
   // const paymentGateway = await PaymentGateway.deploy(accounts[0].address)
 
   // console.log('PaymentGateway deployed to:', paymentGateway.address)
-  const Gateway = await ethers.getContractFactory('BetterTogetherGateway')
+  // const Gateway = await ethers.getContractFactory('BetterTogetherGateway')
+
+  // This is modified to deploy StravaClient only for now
+  const Gateway = await ethers.getContractFactory('StravaClient')
   const gateway = await Gateway.deploy()
+
+  console.log("StravaClient deployed to: ", gateway.address)
+
 }
 
 main()

@@ -27,8 +27,10 @@ contract StravaClient is Ownable, ChainlinkClient {
     */
     constructor (address _link, address _oracle) public {
         setChainlinkToken(_link);
+        // local node (needs to be running) listen to deployed oracle contract and
+        // node configuration job id
         oracle = _oracle;
-        jobId = "29fa9aa13bf1468788b7cc4a500a45b8"; // TODO (tanner): update this once deployed
+        jobId = "414a4cc978d148c3add54a1c0b3534c9";
         externalAdapterFee = 0.1 * 10 ** 18; // 0.1 LINK
     }
 
@@ -57,7 +59,7 @@ contract StravaClient is Ownable, ChainlinkClient {
      * Create a Chainlink request to retrieve API response, find the target
      * data, then multiply by 1000000000000000000 (to remove decimal places from data).
      */
-    function requestStravaData(address user, uint timestamp) internal returns (bytes32 requestId)
+    function requestStravaData(address user, uint timestamp) external returns (bytes32 requestId)
     {
         Chainlink.Request memory req = buildChainlinkRequest(jobId, address(this), this.fulfill.selector);
 

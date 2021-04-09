@@ -2,5 +2,5 @@
 // all we need to do is return the user distance ran for that day
 // timestamp is in UTC
 exports.getStravaDistance = async (user, timestamp) => {
-  return 1.5
+  return 2.3
 }
