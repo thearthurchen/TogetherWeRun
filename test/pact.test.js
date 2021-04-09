@@ -36,16 +36,13 @@ describe('Pact tests', function () {
   it('Goal should be updated and show up', async function () {
     // Set conditions
     await pact.connect(host).setConditions(1, 10, Date.now(), 100)
-    console.log('1')
     // Friend1-3 wants to join through pact contract
     await pact.connect(owner).addParticipant(friend1.address)
     await pact.connect(owner).addParticipant(friend2.address)
     await pact.connect(owner).addParticipant(friend3.address)
-    console.log('2')
     // Start the pact
     // TODO check Need to start pact for any update to be done
     await pact.connect(host).startPact()
-    console.log('3')
     // Fake updates for the friends
     const fakeProgress = {
       [host.address]: 2,
@@ -57,7 +54,6 @@ describe('Pact tests', function () {
     await pact.connect(owner)._updateProgress(friend1.address, Date.now(), fakeProgress[friend1.address])
     await pact.connect(owner)._updateProgress(friend2.address, Date.now(), fakeProgress[friend2.address])
     await pact.connect(owner)._updateProgress(friend3.address, Date.now(), fakeProgress[friend3.address])
-    console.log('4')
 
     // Friend1 wants to see progress
     const participants = await pact.connect(friend1).getParticipants()

@@ -28,10 +28,6 @@ contract BetterTogetherGateway is Ownable {
     // Achieve 1 goal at a time
     mapping (address => bool) private _host;
 
-    // Client addresses that we'll inject into our Pacts
-//    AlarmClient _alarmClient;
-//    address _alarmAddress;
-
     // @dev borrowed from
     // https://medium.com/@ethdapp/using-the-openzeppelin-escrow-library-6384f22caa99
     constructor() public payable {
@@ -40,7 +36,7 @@ contract BetterTogetherGateway is Ownable {
             payable(address(this)),
             msg.sender,
             _numOfPacts.current(),
-            "asdf"
+            "theZeroPact"
         );
         pacts.push(dummy);
         _numOfPacts.increment();

@@ -8,12 +8,11 @@ import "../IPact.sol";
 
 contract AlarmClient is Ownable, ChainlinkClient {
 
+    event Finished();
     // Chainlink Stuff
     address private oracle;
     bytes32 private jobId;
     uint256 private fee;
-
-    mapping( bytes32 => address ) requestIdToAddress;
 
     /**
     * AlarmClock
@@ -22,9 +21,11 @@ contract AlarmClient is Ownable, ChainlinkClient {
     * JobID: a7ab70d561d34eb49e9b1612fd2e044b
     * Fee: 1 LINK
     */
-    constructor() public {
-        setPublicChainlinkToken();
-        oracle = 0x2f90A6D021db21e1B2A077c5a37B3C7E75D15b7e;
+    constructor(address _link, address _oracle) public {
+        setChainlinkToken(_link);
+        // local node (needs to be running) listen to deployed oracle contract and
+        // node configuration job id
+        oracle = _oracle;
         jobId = "a7ab70d561d34eb49e9b1612fd2e044b";
         fee = 1 * 10 ** 18; // 1 LINK
     }
@@ -33,25 +34,19 @@ contract AlarmClient is Ownable, ChainlinkClient {
      * @dev
      * Fall back check if no one checks the progress on the day that Pact ends
      */
-    function setAlarm(address pactAddress, uint endDateUtc) public onlyOwner {
-        Chainlink.Request memory req = buildChainlinkRequest(jobId, address(this), this.fulfill.selector);
-        // Does this even work
-        // TODO calculate days from now until endDate
-        req.addUint("until", now + 8 weeks);
-        bytes32 requestId = sendChainlinkRequestTo(oracle, req, fee);
-        requestIdToAddress[requestId] = pactAddress;
+    function setAlarm(uint endDateUtc) public onlyOwner {
+        Chainlink.Request memory req = buildChainlinkRequest(jobId, address(this), this.fulfillAlarm.selector);
+        req.addUint("until", endDateUtc);
+        sendChainlinkRequestTo(oracle, req, fee);
     }
 
     /**
      * @dev
      * Receive the response in the form of uint256
      */
-    function fulfill(bytes32 requestId) public recordChainlinkFulfillment(requestId)
+    function fulfillAlarm(bytes32 requestId) public virtual
     {
-        address pactAddress = requestIdToAddress[requestId];
-        // Take the interface and call the contract's to check outcome
-        IPact pact = IPact(pactAddress);
-        pact.setFinished();
+        emit Finished();
     }
 
 }

@@ -4,12 +4,11 @@ pragma solidity ^0.6.12;
 import '@openzeppelin/contracts/access/AccessControl.sol';
 import "@openzeppelin/contracts/utils/Counters.sol";
 import '@openzeppelin/contracts/payment/escrow/RefundEscrow.sol';
-import "./alarmClient/IAlarmClient.sol";
-import "./stravaClient/IStravaClient.sol";
+import "./alarmClient/AlarmClient.sol";
 import "./stravaClient/StravaClient.sol";
 
 
-contract Pact is Ownable, AccessControl, StravaClient {
+contract Pact is Ownable, AccessControl, StravaClient, AlarmClient {
 
     // Use SafeMath because its safe
     using SafeMath for uint256;
@@ -46,10 +45,6 @@ contract Pact is Ownable, AccessControl, StravaClient {
     // The state of current Pact
     PactState public state;
 
-    // Clients that will call into our Pact
-    address alarmAddress;
-    IAlarmClient alarmClient;
-
     // Constants
     uint256 SECONDS_IN_A_DAY = 86400;
     address LINK_KOVAN = 0xa36085F69e2889c224210F603D836748e7dC0088;
@@ -78,7 +73,8 @@ contract Pact is Ownable, AccessControl, StravaClient {
         address _host,
         uint256 _id,
         string memory _inviteCode
-    ) StravaClient(LINK_KOVAN, ORACLE_KOVAN) public  {
+    ) AlarmClient(LINK_KOVAN, ORACLE_KOVAN)
+      StravaClient(LINK_KOVAN, ORACLE_KOVAN) public  {
         // Set the params we need for this Pact
         wallet = _wallet;
         host = _host;
@@ -95,9 +91,6 @@ contract Pact is Ownable, AccessControl, StravaClient {
         _setupRole(FRIEND_ROLE, _host);
         // Make host a participant
         participants.push(_host);
-        // Set alarm clock to the alarm clients based on provided addresses
-//        alarmClient = IAlarmClient(_alarmAddress);
-//        alarmAddress = _alarmAddress;
     }
 
     function _compareStringsByBytes(string memory s1, string memory s2) internal pure returns(bool) {
@@ -181,30 +174,6 @@ contract Pact is Ownable, AccessControl, StravaClient {
         return address(escrow);
     }
 
-    function enableRefunds() external returns (uint16) {
-        // Make sure that the goal is complete?
-        // Call the necessary escrow methods to enable refunds or lock it
-        // enableRefunds() or close()
-        require(hasRole(FRIEND_ROLE, msg.sender) || hasRole(HOST_ROLE, msg.sender), "You are not part of the pact");
-
-        // TODO:
-        // Check goal completed
-        if (true) {
-            // Enable refunds back to friends in pact
-            escrow.enableRefunds();
-            return 1;
-        // Check goal not completed and timer is not up
-        } else if (false) {
-            // Allow beneficiary to withdraw, i.e. charity
-            escrow.close();
-            return 2;
-        // If goal is not complete and timer is not up
-        } else {
-            // Escrow still active as is
-            return 3;
-        }
-    }
-
     // Withdraw funds of a specific payee
     function withdraw(address payable payee) external {
         escrow.withdraw(payee);
@@ -233,7 +202,7 @@ contract Pact is Ownable, AccessControl, StravaClient {
         require(hasRole(HOST_ROLE, msg.sender), "You must be the host");
         // Escrow is Active on creation
         // State must be Refund or Closed for any refund or beneficiary withdrawal
-//        alarmClient.setAlarm(address(this), endDateUtc);
+        setAlarm(endDateUtc);
         state = PactState.Started;
         // Set the number of days left in goal
         startDateUtc = block.timestamp;
@@ -288,6 +257,10 @@ contract Pact is Ownable, AccessControl, StravaClient {
         _updateProgress(requestIdToAddress[requestId], requestIdToTimestamp[requestId], distance);
     }
 
+    function fulfillAlarm(bytes32 requestId) public override recordChainlinkFulfillment(requestId) {
+        finishPact();
+    }
+
     // Make sure that the goal is complete for each participant
     function _checkComplete() internal view returns (bool) {
         // Just check the total in progress
@@ -299,38 +272,20 @@ contract Pact is Ownable, AccessControl, StravaClient {
         return true;
     }
 
-    // Alarm clock calls this
-    function _enableRefunds() internal {
-        // Make sure that the goal is complete?
-        // Call the necessary escrow methods to enable refunds or lock it
-        // enableRefunds() or close()
-    }
-
     // This will be called by AlarmClock
     // BetterTogetherGateway is the owner which will call into this
-    function finishPact() public {
-        // Make sure that its the right AlarmClock
-        require(msg.sender == alarmAddress, "You are not the AlarmClock");
+    function finishPact() public onlyOwner {
         // TODO calculate differences
         bool complete = _checkComplete();
         // Set state to finished
         state = PactState.Finished;
         // enableRefunds if goal fail beneficiary else participants
         if (complete) {
-            _enableRefunds();
+            escrow.enableRefunds();
         } else {
             // TODO send to charity somehow? transfer ownership?
+            // Beneficiary can withdraw now by calling beneficiaryWithdraw()
+            escrow.close();
         }
     }
-
-    // TODO DEBUG REMOVE THIS LATER
-    function getMyBalance() external view returns (uint256, uint256, uint256) {
-        return (msg.sender.balance, minPledge, address(escrow).balance);
-    }
-
-    // TODO DEBUG REMOVE THIS LATER
-    function foo(address user) external view returns (address, address, address) {
-        return (msg.sender, user, host);
-    }
-
 }
