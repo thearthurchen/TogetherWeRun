@@ -50,6 +50,9 @@ contract BetterTogetherGateway is Ownable {
     // Check to make sure they are not currently an originator for being better together movement
     // If they are not hosting we return the invite code for their goal
     function createPact(string memory inviteCode) external {
+        // TODO check if they have a pact and it's not "finished"
+        // If not finished throw error
+        // If finished let them make new pact
         require(_addressToPactIndex[msg.sender] == 0, "You already have a pact!");
         Pact pact = new Pact(
             payable(address(this)),
