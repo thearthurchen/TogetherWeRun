@@ -34,7 +34,7 @@ const stravaUsers = dynamoose.model(
 //   );
 // };
 
-createUser();
+// createUser();
 
 // Define custom error scenarios for the API.
 // Return true for the adapter to retry.

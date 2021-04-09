@@ -71,5 +71,4 @@ exports.handlerv2 = (event, context, callback) => {
 // or for running in express
 module.exports = {
   createRequest,
-  createNewUserRequest,
 };
