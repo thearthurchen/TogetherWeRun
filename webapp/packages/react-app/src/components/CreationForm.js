@@ -1,7 +1,6 @@
 import React, { useEffect } from 'react'
-import { ethers } from 'ethers'
 
-const ConditionsForm = ({
+const CreationForm = ({
   pledgeAmount,
   setPledgeAmount,
   totalMiles,
@@ -9,7 +8,9 @@ const ConditionsForm = ({
   endDate,
   setEndDate,
   daysPerCheck,
-  setDaysPerCheck
+  setDaysPerCheck,
+  inviteCode,
+  setInviteCode
 }) => {
   return (
     <form>
@@ -18,7 +19,7 @@ const ConditionsForm = ({
         <input
           name="pledgeAmount"
           type="number"
-          value={ethers.utils.formatEther(pledgeAmount)}
+          value={pledgeAmount}
           onChange={e => setPledgeAmount(e.target.value) }
         >
         </input>
@@ -56,8 +57,19 @@ const ConditionsForm = ({
         >
         </input>
       </label>
+      <br/>
+      <label>
+        Invite code:
+        <input
+          name="inviteCode"
+          type="text"
+          value={inviteCode}
+          onChange={e => setInviteCode(e.target.value) }
+        >
+        </input>
+      </label>
     </form>
   )
 }
 
-export default ConditionsForm
+export default CreationForm

@@ -22,6 +22,7 @@ module.exports = {
     hardhat: {
       chainId: 1337,
       allowUnlimitedContractSize: true,
+      gas: 12000000,
       blockGasLimit: 0x1fffffffffffff
     },
     kovan: {

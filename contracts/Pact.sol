@@ -49,6 +49,9 @@ contract Pact is Ownable, AccessControl, StravaClient, AlarmClient {
     uint256 SECONDS_IN_A_DAY = 86400;
     address LINK_KOVAN = 0xa36085F69e2889c224210F603D836748e7dC0088;
     address ORACLE_KOVAN = 0x2f90A6D021db21e1B2A077c5a37B3C7E75D15b7e;
+    
+    // Deposit Tracking
+    mapping ( address => uint256 ) deposits;
 
     // Goal Tracking
     mapping ( address => mapping ( uint256 => uint256 ) ) timeToProgressIndex;
@@ -120,7 +123,7 @@ contract Pact is Ownable, AccessControl, StravaClient, AlarmClient {
         // Check that the caller is the actual host
         require(hasRole(HOST_ROLE, msg.sender), "Caller is not a host");
         // Set the desired conditions
-        minPledge = _minPledge;
+        minPledge = _minPledge * 10 ** 18;
         endDateUtc = _endDateUtc;
         daysPerCheck = _daysPerCheck;
         totalMiles = _totalMiles;
@@ -135,20 +138,12 @@ contract Pact is Ownable, AccessControl, StravaClient, AlarmClient {
         require(state == PactState.Pending, "Pact is not allowing anymore pledges!");
         // TODO let host make a pledge too
         require(hasRole(FRIEND_ROLE, msg.sender), "Caller is not a friend");
-        // Make sure that they have enough to pledge
-        require(msg.sender.balance > 0, "This should work?");
         // TODO this is probably not right we only care if the msg.value is >= pledge
         require(msg.sender.balance >= minPledge, "You need to pledge a bit more to be better together");
         // Deposit into our escrow
         escrow.deposit{value: msg.value}(msg.sender);
+        deposits[msg.sender] += msg.value;
         emit Deposited(msg.sender, msg.value);
-    }
-
-    // TODO take the private key to sign it?
-    // DONT NEED THIS ANYMORE
-    function _generateInviteCode() internal view returns (string memory) {
-        require(state == PactState.Pending, "Pact is already started or finished can't invite more people");
-        return "Hello!!";
     }
 
     function addParticipant(address participant) public onlyOwner {
@@ -188,10 +183,11 @@ contract Pact is Ownable, AccessControl, StravaClient, AlarmClient {
     }
 
     // Returns the whole struct of goal back???
-    function getProgress(address user) external view returns (uint256) {
+    function getProgress(address user) external view returns (uint256, uint256) {
         require(hasRole(FRIEND_ROLE, msg.sender), "You are not part of the pact");
-        return progress[user];
+        return (progress[user], deposits[user]);
     }
+    
 
     // Is the pact complete
     function isPactComplete() external view returns (bool) {

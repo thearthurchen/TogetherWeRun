@@ -12,10 +12,10 @@ async function main () {
   // const Gateway = await ethers.getContractFactory('BetterTogetherGateway')
 
   // This is modified to deploy StravaClient only for now
-  const Gateway = await ethers.getContractFactory('StravaClient')
+  const Gateway = await ethers.getContractFactory('BetterTogetherGateway')
   const gateway = await Gateway.deploy()
 
-  console.log("StravaClient deployed to: ", gateway.address)
+  console.log("BetterTogetherGateway deployed to: ", gateway.address)
 
 }
 

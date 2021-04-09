@@ -3,7 +3,7 @@
 const addresses = {
   network: "Hardhat Network",
   BetterTogetherGateway: {
-    address: "0x5fbdb2315678afecb367f032d93f642f64180aa3",
+    address: "0x8A791620dd6260079BF849Dc5567aDC3F2FdC318",
   }
 };
 
