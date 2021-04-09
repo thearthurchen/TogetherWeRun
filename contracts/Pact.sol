@@ -269,7 +269,7 @@ contract Pact is Ownable, AccessControl, StravaClient {
         // and run total miles at the end in 1 day
         // If it does exist (ie. not 0) we simply update with the new distance
         if (index > 0 ) {
-            progressV2[user][index] = distance;
+            progressV2[user][index] = distance - 1;
         } else {
             // Add the distance to the progressV2 array
             progressV2[user].push(distance);
