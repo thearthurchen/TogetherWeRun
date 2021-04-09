@@ -3,6 +3,7 @@ import { useCallback, useEffect, useState } from "react";
 import { Web3Provider } from "@ethersproject/providers";
 import Web3Modal from "web3modal";
 import WalletConnectProvider from "@walletconnect/web3-provider";
+import { getRoles } from '../contractFunctions.js';
 
 // import { getRoles } from "../services/contract-functions";
 
@@ -16,7 +17,7 @@ function useWeb3Modal(config = {}) {
   const [provider, setProvider] = useState();
   const [autoLoaded, setAutoLoaded] = useState(false);
   const [signedInAddress, setSignedInAddress] = useState("");
-  const [roles, setRoles] = useState([]);
+  // const [roles, setRoles] = useState([]);
   const { autoLoad = true, infuraId = INFURA_ID, NETWORK = NETWORK_NAME } = config;
 
   // Web3Modal also supports many other wallets.
@@ -39,11 +40,17 @@ function useWeb3Modal(config = {}) {
     const newProvider = await web3Modal.connect();
     setProvider(new Web3Provider(newProvider));
     setSignedInAddress(newProvider.selectedAddress);
-  }, [web3Modal]);
+    // Subscribing to accounts changed https://github.com/Web3Modal/web3modal
+    newProvider.on("accountsChanged", (accounts) => {
+      console.log('signed in account:', accounts[0]);
+      setSignedInAddress(accounts[0]);
+    });
+  }, [web3Modal, signedInAddress]);
 
-  async function fetchRoles() {
-    // setRoles(await getRoles(provider, signedInAddress));
-  };
+  // getRoles(provider, pactAddress)
+  // async function fetchRoles() {
+  //   setRoles(await getRoles(provider, '0xB7A5bd0345EF1Cc5E66bf61BdeC17D2461fBd968'));
+  // };
 
   const logoutOfWeb3Modal = useCallback(
     async function () {
@@ -60,13 +67,13 @@ function useWeb3Modal(config = {}) {
       loadWeb3Modal();
       setAutoLoaded(true);
     }
-  }, [autoLoad, autoLoaded, loadWeb3Modal, setAutoLoaded, web3Modal.cachedProvider]);
+  }, [autoLoad, autoLoaded, loadWeb3Modal, setAutoLoaded, web3Modal.cachedProvider, signedInAddress]);
 
-  useEffect(() => {
-    fetchRoles();
-  }, [signedInAddress]);
+  // useEffect(() => {
+  //   fetchRoles();
+  // }, [signedInAddress]);
 
-  return [provider, loadWeb3Modal, logoutOfWeb3Modal, signedInAddress, roles];
+  return [provider, loadWeb3Modal, logoutOfWeb3Modal, signedInAddress];
 }
 
 export default useWeb3Modal;

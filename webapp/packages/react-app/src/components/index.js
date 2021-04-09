@@ -52,3 +52,99 @@ export const Button = styled.button`
     outline: none;
   }
 `;
+
+export const StyledModal = styled.div`
+  position: fixed;
+  left: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: all 0.3s ease-in-out;
+  pointer-events: none;
+
+  &.enter-done {
+    opacity: 1;
+    pointer-events: visible;
+  }
+
+  &.exit {
+    opacity: 0;
+  }
+
+  &.enter-done .modal-content {
+    transform: translateY(0);
+  }
+
+  &.exit .modal-content {
+    transform: translateY(-200px);
+  }
+
+  .modal-content {
+    width: 500px;
+    background-color: white;
+    color: black;
+    border-radius: 8px;
+    transform: translateY(-200px);
+    transition: all 0.3s ease-in-out;
+  }
+
+  .modal-header, .modal-footer {
+    padding: 10px;
+  }
+
+  .modal-body {
+    padding: 10px;
+    border-top: 1px solid black;
+    border-bottom: 1px solid black;
+  }
+`;
+
+export const StyledTable = styled.table`
+  border-collapse: collapse;
+  margin: 25px 0;
+  font-size: 0.9em;
+  font-family: sans-serif;
+  min-width: 400px;
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
+  border-radius: 5px;
+  overflow: hidden;
+
+  thead tr {
+    background-color: #009879;
+    color: #ffffff;
+    text-align: left;
+    font-weight: bold;
+  }
+
+  th,
+  td {
+    padding: 12px 15px;
+  }
+
+  tbody tr {
+    background-color: grey;
+    border-bottom: 1px solid #dddddd;
+  }
+
+  tbody tr:nth-of-type(even) {
+    background-color: #f3f3f3;
+    color: blue;
+  }
+
+  tbody tr:last-of-type {
+    border-bottom: 2px solid #009879;
+}
+
+  tbody tr.active-row {
+    font-weight: bold;
+    color: #009879;
+}
+`
+
+// ${props => props.show && 'opacity: 1;'}
+// ${props => props.show && 'pointer-events: visible;'}
