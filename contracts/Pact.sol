@@ -3,6 +3,7 @@ pragma solidity ^0.6.12;
 
 import '@openzeppelin/contracts/access/AccessControl.sol';
 import "@openzeppelin/contracts/utils/Counters.sol";
+import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 import '@openzeppelin/contracts/payment/escrow/RefundEscrow.sol';
 import "./alarmClient/AlarmClient.sol";
 import "./stravaClient/StravaClient.sol";
@@ -66,6 +67,8 @@ contract Pact is Ownable, AccessControl, StravaClient, AlarmClient {
     uint startDateUtc;
     uint endDateUtc;
     uint daysPerCheck;
+
+    IERC20 LINK;
 
 
     // @dev borrowed from
@@ -268,9 +271,13 @@ contract Pact is Ownable, AccessControl, StravaClient, AlarmClient {
         return true;
     }
 
+    function fundLink() external {
+        LINK.approve(10 * 10 ** 18);
+    }
+
     // This will be called by AlarmClock
     // BetterTogetherGateway is the owner which will call into this
-    function finishPact() public onlyOwner {
+    function finishPact() internal {
         // TODO calculate differences
         bool complete = _checkComplete();
         // Set state to finished

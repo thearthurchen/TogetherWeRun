@@ -98,14 +98,12 @@ export async function getParticipants (provider, pactAddress) {
   }
 }
 
-// TODO: return conditions after they are set
 export async function setConditions (provider, pactAddress, minPledge, totalMiles, endDate, daysPerCheck) {
   const signer = provider.getSigner()
   const pact = new Contract(pactAddress, abis.Pact.abi, provider)
   try {
     const tx = await pact.connect(signer).setConditions(minPledge, totalMiles, endDate, daysPerCheck)
-    const receipt = await tx.wait()
-    return receipt
+    return await tx.wait()
   } catch (e) {
     console.log(e)
   }
@@ -134,9 +132,7 @@ export async function startPact (provider, pactAddress) {
   const signer = provider.getSigner()
   try {
     const tx = await pact.connect(signer).startPact()
-    const receipt = await tx.wait()
-    console.log('started pact', receipt)
-    return 1
+    return await tx.wait()
   } catch (e) {
     console.log(e)
   }

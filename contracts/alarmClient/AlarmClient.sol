@@ -34,7 +34,7 @@ contract AlarmClient is Ownable, ChainlinkClient {
      * @dev
      * Fall back check if no one checks the progress on the day that Pact ends
      */
-    function setAlarm(uint endDateUtc) public onlyOwner {
+    function setAlarm(uint endDateUtc) internal {
         Chainlink.Request memory req = buildChainlinkRequest(jobId, address(this), this.fulfillAlarm.selector);
         req.addUint("until", endDateUtc);
         sendChainlinkRequestTo(oracle, req, fee);
