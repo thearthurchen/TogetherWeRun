@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react'
-import { Button, Header } from '../components'
+import { useLocation } from 'react-router-dom'
+import axios from 'axios'
+import { Button } from '../components'
 import Modal from './Modal.js'
 import ConditionsForm from './ConditionsForm.js'
 import ProgressView from './ProgressView.js'
@@ -13,7 +15,9 @@ const PACT_STATE = {
   2: 'FINISHED'
 }
 
-const STRAVA_URL = 'https://www.strava.com/oauth/authorize?client_id=63889&response_type=code&redirect_uri=http://localhost&approval_prompt=force&scope=read,activity:read'
+const STRAVA_URL = 'https://www.strava.com/oauth/authorize?client_id=63889&response_type=code&redirect_uri=http://localhost:3000&approval_prompt=force&scope=read,activity:read'
+const STRAVA_EA_NEW_USER_URL = 'http://localhost:8080/create-new-user'
+let hasMadePostCall = false;
 
 // If host and pact state pending render a setConditions button
 // If participant and pact pending render pending if pledge made otherwise render pledge button
@@ -103,10 +107,55 @@ const PactView = ({ provider, pactAddress, signedInAddress }) => {
     setProgress(progress)
   }
 
+  const handleOAuth = async (code) => {
+    if (!code) {
+      console.log('no access code')
+      return 400;
+    }
+
+    try {
+    console.log('code', code);
+      const response = await axios({
+        url: STRAVA_EA_NEW_USER_URL, 
+        method: 'post', 
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        data: {
+          code
+        }
+      });
+
+      return response;
+    } catch (err) {
+      console.log('bad axios requeset', err);
+      return 400;
+    }
+  }
+
+  const getCode = async (code) => {
+    const oAuthMsg = await handleOAuth(code);
+    return oAuthMsg;
+    console.log('oAuthMsg', oAuthMsg);
+  }
+
+  const { search } = useLocation();
+  const code = new URLSearchParams(search).get('code');
+
+  let status;
+  if (!hasMadePostCall && Boolean(code)) {
+    hasMadePostCall = true;
+    status = getCode(code);
+  }
+
+  if (status === 200) {
+    alert('You are now signed up with Strava.')
+  }
+
   return (
     <>
       <>
-        <Header>Pact is {PACT_STATE[pactState]}</Header>
+        <>Pact is {PACT_STATE[pactState]}</>
         <br/>
         <PledgeView pledges={pledges}/>
       </>

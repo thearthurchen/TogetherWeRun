@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react'
-import { Body, Header } from './components'
+import { BrowserRouter, Route } from "react-router-dom";
+import { Section, Header } from './components'
 import PactView from './components/PactView.js'
 import GatewayView from './components/GatewayView.js'
 import WalletButton from './components/WalletButton.js'
@@ -28,31 +29,33 @@ function App () {
   }, [signedInAddress, provider])
 
   return (
-    <>
-      <Header>
-        <WalletButton
-          provider={provider}
-          loadWeb3Modal={loadWeb3Modal}
-          logoutOfWeb3Modal={logoutOfWeb3Modal}
-          signedInAddress={signedInAddress}
-        />
-      </Header>
-      <Body>
-        {pactAddress
-          ? <PactView
+    <BrowserRouter>
+      <Section>
+        <Header>
+          <WalletButton
             provider={provider}
-            pactAddress={pactAddress}
+            loadWeb3Modal={loadWeb3Modal}
+            logoutOfWeb3Modal={logoutOfWeb3Modal}
             signedInAddress={signedInAddress}
           />
-          : <GatewayView
-            provider={provider}
-            setPactAddress={setPactAddress}
-            signedInAddress={signedInAddress}
-            logo={logo}
-          />
-        }
-      </Body>
-    </>
+        </Header>
+        <>
+          {true
+            ? <PactView
+              provider={provider}
+              pactAddress={pactAddress}
+              signedInAddress={signedInAddress}
+            />
+            : <GatewayView
+              provider={provider}
+              setPactAddress={setPactAddress}
+              signedInAddress={signedInAddress}
+              logo={logo}
+            />
+          }
+        </>
+      </Section>
+    </BrowserRouter>
   )
 }
 

@@ -8,9 +8,12 @@ export const Header = styled.header`
   align-items: center;
   justify-content: flex-end;
   color: white;
+  position: absolute;
+  top: 0;
+  width: -webkit-fill-available;
 `;
 
-export const Body = styled.body`
+export const Section = styled.section`
   align-items: center;
   background-color: #282c34;
   color: white;
@@ -18,7 +21,8 @@ export const Body = styled.body`
   flex-direction: column;
   font-size: calc(10px + 2vmin);
   justify-content: center;
-  min-height: calc(100vh - 70px);
+  height: 100vh;
+  position: relative;
 `;
 
 export const Image = styled.img`
@@ -51,6 +55,10 @@ export const Button = styled.button`
     border: none;
     outline: none;
   }
+`;
+
+export const P = styled.p`
+  margin: 0
 `;
 
 export const StyledModal = styled.div`
