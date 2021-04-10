@@ -13,10 +13,10 @@
 const addresses = {
   network: "Kovan Network",
   BetterTogetherGateway: {
-    address: "0xd3E6Fd4835C2c40c65e39B52a88081CC8278b265",
+    address: "0x3533E6Bc4E0300E4Cd9fCf2ec77a29b0dcBD39e4",
   },
   EscrowFactory: {
-    address: "0xd7C9Ca2BB66ec094bd7e90003a0D3581A4560528",
+    address: "0x105438c65dEB5AC9ac0b0808f1aB2AA3E3EC7c23",
   },
 };
 
