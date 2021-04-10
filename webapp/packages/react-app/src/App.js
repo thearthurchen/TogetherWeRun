@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
-import { BrowserRouter, Route } from "react-router-dom";
 import { Button } from "@material-ui/core";
+import { BrowserRouter, Route } from "react-router-dom";
 import { GitHub as GitHubIcon } from "@material-ui/icons";
 import { Section, Header } from "./components";
 import PactView from "./components/PactView.js";
@@ -44,9 +44,17 @@ function App() {
   return (
     <BrowserRouter>
       <Section>
-        <AppBar position="static" style={{ position: "absolute", top: "0", display: "flex", justifyContent: "space-between" }}>
+        <AppBar
+          position="static"
+          style={{
+            position: "absolute",
+            top: "0",
+            display: "flex",
+            justifyContent: "space-between",
+          }}
+        >
           <Toolbar>
-            <Button>
+            <Button color="primary" variant="contained">
               <a>
                 <GitHubIcon href="https://github.com/thearthurchen/TogetherWeRun"></GitHubIcon>
               </a>
