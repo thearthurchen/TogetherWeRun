@@ -1,6 +1,6 @@
 import React, { useState } from "react";
+import { Button } from "@material-ui/core";
 import Modal from "./Modal.js";
-import { Button } from ".";
 import { ethers } from "ethers";
 import { createPact, fundLink, joinPact } from "../contractFunctions.js";
 
@@ -51,6 +51,8 @@ const GatewayView = ({ provider, setPactAddress, signedInAddress, logo }) => {
         </form>
       </Modal>
       <Button
+        color="primary"
+        variant="contained"
         style={{ marginTop: "8px" }}
         onClick={() => {
           setShowInviteModal(true);
@@ -59,6 +61,8 @@ const GatewayView = ({ provider, setPactAddress, signedInAddress, logo }) => {
         Create Pact
       </Button>
       <Button
+        color="primary"
+        variant="contained"
         style={{ marginTop: "8px" }}
         onClick={() => handleJoinPact(provider, "", "abc")}
       >

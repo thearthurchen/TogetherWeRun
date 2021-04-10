@@ -218,7 +218,7 @@ const PactView = ({ provider, pactAddress, signedInAddress }) => {
         <br />
         {isHost && <>Chainlink in the bank - {currentLink}</>}
       </>
-      {true ? (
+      {pactState === 0 ? (
         <>
           <Modal
             title="Creating Pact"
@@ -238,7 +238,7 @@ const PactView = ({ provider, pactAddress, signedInAddress }) => {
             />
           </Modal>
           <PledgeView pledges={pledges} />
-          {true ? (
+          {isHost ? (
             <>
               <Button
                 color="primary"
