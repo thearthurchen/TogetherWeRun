@@ -2,20 +2,19 @@
 pragma solidity ^0.6.12;
 
 import '@openzeppelin/contracts/access/AccessControl.sol';
-import "@openzeppelin/contracts/utils/Counters.sol";
-import '@openzeppelin/contracts/payment/escrow/RefundEscrow.sol';
-import "./alarmClient/IAlarmClient.sol";
-import "./stravaClient/IStravaClient.sol";
+//import "@openzeppelin/contracts/utils/Counters.sol";
+import "@openzeppelin/contracts/math/SafeMath.sol";
+import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
+import './IRefundEscrow.sol';
+import "./alarmClient/AlarmClient.sol";
 import "./stravaClient/StravaClient.sol";
 
 
-contract Pact is Ownable, AccessControl, StravaClient {
+contract Pact is Ownable, AccessControl, StravaClient, AlarmClient {
 
     // Use SafeMath because its safe
     using SafeMath for uint256;
     using SafeMath for uint64;
-    // Use counter to track all ids
-    using Counters for Counters.Counter;
 
     // Pact can only be Pending, Started, or Finished
     enum PactState { Pending, Started, Finished }
@@ -35,40 +34,31 @@ contract Pact is Ownable, AccessControl, StravaClient {
     address public host;
     // Mapping of the participants in this Pact
     mapping ( address => bool ) private participantMap;
-    address[] public participants;
+    address[] internal participants;
     // Unique inviteCode for this Pact
     // TODO arthur (make this host only)
     string public inviteCode;
-    // Id of the Pact
-    uint256 public id;
     // The escrow that actually holds the money
-    RefundEscrow escrow;
+    IRefundEscrow escrow;
     // The state of current Pact
     PactState public state;
 
-    // Clients that will call into our Pact
-    address alarmAddress;
-    IAlarmClient alarmClient;
-
     // Constants
-    uint256 SECONDS_IN_A_DAY = 86400;
+//    uint256 SECONDS_IN_A_DAY = 86400;
     address LINK_KOVAN = 0xa36085F69e2889c224210F603D836748e7dC0088;
     address ORACLE_KOVAN = 0x2f90A6D021db21e1B2A077c5a37B3C7E75D15b7e;
+    
+    // Deposit Tracking
+    mapping ( address => uint256 ) deposits;
 
     // Goal Tracking
-    mapping ( address => mapping ( uint256 => uint256 ) ) timeToProgressIndex;
     mapping ( address => uint256 ) progress;
-    mapping ( address => uint256[] ) progressV2;
-    mapping ( address => Counters.Counter ) indexes;
-    mapping ( bytes32 => address) requestIdToAddress;
-    mapping ( bytes32 => uint256) requestIdToTimestamp;
+    mapping ( bytes32 => address) reqToAdd;
     uint minPledge;
     uint totalMiles;
-    Counters.Counter daysUntilEnd;
     uint startDateUtc;
     uint endDateUtc;
     uint daysPerCheck;
-
 
     // @dev borrowed from
     // https://medium.com/@ethdapp/using-the-openzeppelin-escrow-library-6384f22caa99
@@ -76,15 +66,12 @@ contract Pact is Ownable, AccessControl, StravaClient {
     constructor(
         address payable _wallet, // do we want this to be beneficiary?
         address _host,
-        uint256 _id,
         string memory _inviteCode
-    ) StravaClient(LINK_KOVAN, ORACLE_KOVAN) public  {
+    ) AlarmClient(LINK_KOVAN, ORACLE_KOVAN)
+      StravaClient(LINK_KOVAN, ORACLE_KOVAN) public  {
         // Set the params we need for this Pact
         wallet = _wallet;
         host = _host;
-        id = _id;
-        // We use a refund escrow wallet should actually be the charity
-        escrow = new RefundEscrow(wallet);
         // TODO We could opt to use the InviteCodeClient if we want VRF
         // Otherwise client passes in the code
         inviteCode = _inviteCode;
@@ -95,29 +82,14 @@ contract Pact is Ownable, AccessControl, StravaClient {
         _setupRole(FRIEND_ROLE, _host);
         // Make host a participant
         participants.push(_host);
-        // Set alarm clock to the alarm clients based on provided addresses
-//        alarmClient = IAlarmClient(_alarmAddress);
-//        alarmAddress = _alarmAddress;
+    }
+
+    function setRefundEscrow(address _escrowAddress) external onlyOwner {
+        escrow = IRefundEscrow(_escrowAddress);
     }
 
     function _compareStringsByBytes(string memory s1, string memory s2) internal pure returns(bool) {
         return keccak256(abi.encodePacked(s1)) == keccak256(abi.encodePacked(s2));
-    }
-
-    function _floorToStartOfDay(uint256 timestamp) internal view returns (uint256) {
-        return uint256(timestamp/SECONDS_IN_A_DAY) * SECONDS_IN_A_DAY;
-    }
-
-    function _getDaysBetween(uint256 start, uint256 end) internal view returns (uint256) {
-        require(end > start, "End is before start");
-        uint256 diff  = end - start;
-        return diff / SECONDS_IN_A_DAY;
-    }
-
-    function getInviteCode() external returns (string memory) {
-        // Check that the caller is the actual host
-        require(hasRole(HOST_ROLE, msg.sender), "Caller is not a host");
-        return inviteCode;
     }
 
     // @dev setter and getter for conditions
@@ -142,20 +114,12 @@ contract Pact is Ownable, AccessControl, StravaClient {
         require(state == PactState.Pending, "Pact is not allowing anymore pledges!");
         // TODO let host make a pledge too
         require(hasRole(FRIEND_ROLE, msg.sender), "Caller is not a friend");
-        // Make sure that they have enough to pledge
-        require(msg.sender.balance > 0, "This should work?");
         // TODO this is probably not right we only care if the msg.value is >= pledge
         require(msg.sender.balance >= minPledge, "You need to pledge a bit more to be better together");
         // Deposit into our escrow
         escrow.deposit{value: msg.value}(msg.sender);
+        deposits[msg.sender] += msg.value;
         emit Deposited(msg.sender, msg.value);
-    }
-
-    // TODO take the private key to sign it?
-    // DONT NEED THIS ANYMORE
-    function _generateInviteCode() internal view returns (string memory) {
-        require(state == PactState.Pending, "Pact is already started or finished can't invite more people");
-        return "Hello!!";
     }
 
     function addParticipant(address participant) public onlyOwner {
@@ -181,30 +145,6 @@ contract Pact is Ownable, AccessControl, StravaClient {
         return address(escrow);
     }
 
-    function enableRefunds() external returns (uint16) {
-        // Make sure that the goal is complete?
-        // Call the necessary escrow methods to enable refunds or lock it
-        // enableRefunds() or close()
-        require(hasRole(FRIEND_ROLE, msg.sender) || hasRole(HOST_ROLE, msg.sender), "You are not part of the pact");
-
-        // TODO:
-        // Check goal completed
-        if (true) {
-            // Enable refunds back to friends in pact
-            escrow.enableRefunds();
-            return 1;
-        // Check goal not completed and timer is not up
-        } else if (false) {
-            // Allow beneficiary to withdraw, i.e. charity
-            escrow.close();
-            return 2;
-        // If goal is not complete and timer is not up
-        } else {
-            // Escrow still active as is
-            return 3;
-        }
-    }
-
     // Withdraw funds of a specific payee
     function withdraw(address payable payee) external {
         escrow.withdraw(payee);
@@ -219,10 +159,11 @@ contract Pact is Ownable, AccessControl, StravaClient {
     }
 
     // Returns the whole struct of goal back???
-    function getProgress(address user) external view returns (uint256) {
+    function getProgress(address user) external view returns (uint256, uint256) {
         require(hasRole(FRIEND_ROLE, msg.sender), "You are not part of the pact");
-        return progress[user];
+        return (progress[user], deposits[user]);
     }
+    
 
     // Is the pact complete
     function isPactComplete() external view returns (bool) {
@@ -233,14 +174,14 @@ contract Pact is Ownable, AccessControl, StravaClient {
         require(hasRole(HOST_ROLE, msg.sender), "You must be the host");
         // Escrow is Active on creation
         // State must be Refund or Closed for any refund or beneficiary withdrawal
-//        alarmClient.setAlarm(address(this), endDateUtc);
+        setAlarm(endDateUtc);
         state = PactState.Started;
         // Set the number of days left in goal
         startDateUtc = block.timestamp;
         // TODO Too tired to think about inclusive endDate or not
         // Note: This is probably not ok to access _value directly
         // But I don't want to write my own Counter struct right now
-        daysUntilEnd._value = _getDaysBetween(block.timestamp, endDateUtc);
+//        daysUntilEnd._value = _getDaysBetween(block.timestamp, endDateUtc);
     }
 
     // This would probably call the StravaClient to update the progressV2
@@ -250,42 +191,24 @@ contract Pact is Ownable, AccessControl, StravaClient {
         require(hasRole(FRIEND_ROLE, msg.sender), "You are not part of the pact");
         // Request Strava Data on behalf of the user
         bytes32 requestId = requestStravaData(msg.sender, uint64(block.timestamp));
-        requestIdToAddress[requestId] = msg.sender;
+        reqToAdd[requestId] = msg.sender;
     }
 
     // ???
-    function _updateProgress(address user, uint256 timestamp, uint256 distance) public onlyOwner {
+    function _updateProgress(address user, uint256 distance) public onlyOwner {
         // Make sure that we're in the Started state
         require(state == PactState.Started, "Pact must be started for any progressV2 updates");
-        // Timestamp cant be 0
-        require(timestamp > 0, "Can't use zero timestamp");
-        // We floor the timestamp to the start of day so that multiple updates
-        // will just update old value
-        // We could also make sure that people don't try to update more than X times a day?
-        uint256 theDay = _floorToStartOfDay(timestamp);
-        // Check if the value exists already in our timeToProgressIndex
-        uint256 index = timeToProgressIndex[user][theDay];
-        // TODO arthur make our tracking more granular to make sure people dont cheat
-        // and run total miles at the end in 1 day
-        // If it does exist (ie. not 0) we simply update with the new distance
-        if (index > 0 ) {
-            progressV2[user][index] = distance - 1;
-        } else {
-            // Add the distance to the progressV2 array
-            progressV2[user].push(distance);
-            // Record which index it is based on timestamp
-            timeToProgressIndex[user][theDay] = indexes[user].current();
-            // Increment the counter
-            indexes[user].increment();
-        }
-        // dumb way to track for now
         progress[user] += distance;
         emit ProgressUpdated(user, progress[user]);
     }
 
     // Override the StravaClient method to call our _updateProgress
     function fulfill(bytes32 requestId, uint256 distance) public override recordChainlinkFulfillment(requestId){
-        _updateProgress(requestIdToAddress[requestId], requestIdToTimestamp[requestId], distance);
+        _updateProgress(reqToAdd[requestId], distance);
+    }
+
+    function fulfillAlarm(bytes32 requestId) public override recordChainlinkFulfillment(requestId) {
+        finishPact();
     }
 
     // Make sure that the goal is complete for each participant
@@ -299,38 +222,20 @@ contract Pact is Ownable, AccessControl, StravaClient {
         return true;
     }
 
-    // Alarm clock calls this
-    function _enableRefunds() internal {
-        // Make sure that the goal is complete?
-        // Call the necessary escrow methods to enable refunds or lock it
-        // enableRefunds() or close()
-    }
-
     // This will be called by AlarmClock
     // BetterTogetherGateway is the owner which will call into this
-    function finishPact() public {
-        // Make sure that its the right AlarmClock
-        require(msg.sender == alarmAddress, "You are not the AlarmClock");
+    function finishPact() internal {
         // TODO calculate differences
         bool complete = _checkComplete();
         // Set state to finished
         state = PactState.Finished;
         // enableRefunds if goal fail beneficiary else participants
         if (complete) {
-            _enableRefunds();
+            escrow.enableRefunds();
         } else {
             // TODO send to charity somehow? transfer ownership?
+            // Beneficiary can withdraw now by calling beneficiaryWithdraw()
+            escrow.close();
         }
     }
-
-    // TODO DEBUG REMOVE THIS LATER
-    function getMyBalance() external view returns (uint256, uint256, uint256) {
-        return (msg.sender.balance, minPledge, address(escrow).balance);
-    }
-
-    // TODO DEBUG REMOVE THIS LATER
-    function foo(address user) external view returns (address, address, address) {
-        return (msg.sender, user, host);
-    }
-
 }

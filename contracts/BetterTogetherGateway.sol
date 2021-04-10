@@ -1,14 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.6.12;
 
-
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
 import "@openzeppelin/contracts/math/SafeMath.sol";
-import "@openzeppelin/contracts/payment/escrow/RefundEscrow.sol";
 import "./Pact.sol";
-import "./alarmClient/AlarmClient.sol";
-
+import "./IEscrowFactory.sol";
 
 contract BetterTogetherGateway is Ownable {
 
@@ -25,25 +22,21 @@ contract BetterTogetherGateway is Ownable {
     Counters.Counter private _numOfPacts;
     // Track the originator to their escrow
     mapping (address => uint256) private _addressToPactIndex;
-    // Achieve 1 goal at a time
-    mapping (address => bool) private _host;
 
-    // Client addresses that we'll inject into our Pacts
-//    AlarmClient _alarmClient;
-//    address _alarmAddress;
+    IEscrowFactory escrowFactory;
 
     // @dev borrowed from
     // https://medium.com/@ethdapp/using-the-openzeppelin-escrow-library-6384f22caa99
-    constructor() public payable {
+    constructor(address escrowFactoryAddress) public payable {
         // We want all new contracts from this gateway to start at 1
         Pact dummy = new Pact(
             payable(address(this)),
             msg.sender,
-            _numOfPacts.current(),
-            "asdf"
+            "theZeroPact"
         );
         pacts.push(dummy);
         _numOfPacts.increment();
+        escrowFactory = IEscrowFactory(escrowFactoryAddress);
     }
 
     function _compareStringsByBytes(string memory s1, string memory s2) internal pure returns(bool) {
@@ -54,18 +47,29 @@ contract BetterTogetherGateway is Ownable {
     // Check to make sure they are not currently an originator for being better together movement
     // If they are not hosting we return the invite code for their goal
     function createPact(string memory inviteCode) external {
+        // TODO check if they have a pact and it's not "finished"
+        // If not finished throw error
+        // If finished let them make new pact
         require(_addressToPactIndex[msg.sender] == 0, "You already have a pact!");
         Pact pact = new Pact(
             payable(address(this)),
             msg.sender,
-            _numOfPacts.current(),
             inviteCode
         );
+        escrowFactory.createEscrow(msg.sender, address(pact));
         pacts.push(pact);
         // We track w/ gateway just in case the host forgets their Pact address
         _addressToPactIndex[msg.sender] = _numOfPacts.current();
         _numOfPacts.increment();
         emit PactJoined(msg.sender, address(pact));
+    }
+
+    function connectEscrow() external {
+        uint256 pactIndex = _addressToPactIndex[msg.sender];
+        require(pactIndex > 0, "Invalid host or code");
+        Pact pact = pacts[pactIndex];
+        address escrowAddress = escrowFactory.getEscrow(msg.sender);
+        pact.setRefundEscrow(escrowAddress);
     }
 
     // Join a pact through gateway

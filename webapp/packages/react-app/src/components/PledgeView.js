@@ -2,21 +2,21 @@ import React from "react";
 import { StyledTable } from ".";
 import { ethers } from "ethers";
 
-const ProgressView = ({ progress }) => {
+const PledgeView = ({ pledges }) => {
   return (
     <StyledTable>
       <thead>
         <tr>
           <th>Participant</th>
-          <th>Miles</th>
+          <th>Pledge</th>
         </tr>
       </thead>
       <tbody>
-        {Object.keys(progress).map((key, idx) => {
+        {Object.keys(pledges).map((key, idx) => {
           return (
             <tr key={idx}>
               <td>{key}</td>
-              <td>{ethers.utils.formatEther(progress[key])}</td>
+              <td>{ethers.utils.formatEther(pledges[key])}</td>
             </tr>
           );
         })}
@@ -25,4 +25,4 @@ const ProgressView = ({ progress }) => {
   );
 };
 
-export default ProgressView;
+export default PledgeView;

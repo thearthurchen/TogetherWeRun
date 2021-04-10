@@ -1,9 +1,13 @@
-import BetterTogetherGatewayAbi from '../../../../artifacts/contracts/BetterTogetherGateway.sol/BetterTogetherGateway.json';
-import PactAbi from '../../../../artifacts/contracts/Pact.sol/Pact.json';
+import BetterTogetherGatewayAbi from "../../../../artifacts/contracts/BetterTogetherGateway.sol/BetterTogetherGateway.json";
+import EscrowFactoryAbi from "../../../../artifacts/contracts/EscrowFactory.sol/EscrowFactory.json";
+import PactAbi from "../../../../artifacts/contracts/Pact.sol/Pact.json";
+import ChainlinkAbi from "./abis/chainlink.json";
 
 const abis = {
   BetterTogetherGateway: BetterTogetherGatewayAbi,
-  Pact: PactAbi
-}
+  Pact: PactAbi,
+  Link: ChainlinkAbi,
+  EscrowFactoryAbi: EscrowFactoryAbi,
+};
 
-export default abis
+export default abis;

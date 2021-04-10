@@ -1,16 +1,25 @@
-import React, { useEffect } from "react";
+import React, { useEffect } from 'react'
+import { ethers } from 'ethers'
 
-const ConditionsForm = ({pledgeAmount, setPledgeAmount, totalMiles, setTotalMiles, endDate, setEndDate, daysPerCheck, setDaysPerCheck}) =>{
-
-  return(
+const ConditionsForm = ({
+  pledgeAmount,
+  setPledgeAmount,
+  totalMiles,
+  setTotalMiles,
+  endDate,
+  setEndDate,
+  daysPerCheck,
+  setDaysPerCheck
+}) => {
+  return (
     <form>
       <label>
         Amount:
         <input
-        name="pledgeAmount"
-        type="number"
-        value={pledgeAmount}
-        onChange={e => setPledgeAmount(e.target.value) }
+          name="pledgeAmount"
+          type="number"
+          value={pledgeAmount}
+          onChange={e => setPledgeAmount(e.target.value) }
         >
         </input>
       </label>
@@ -18,10 +27,10 @@ const ConditionsForm = ({pledgeAmount, setPledgeAmount, totalMiles, setTotalMile
       <label>
         Total Miles:
         <input
-        name="totalMiles"
-        type="number"
-        value={totalMiles}
-        onChange={e => setTotalMiles(e.target.value) }
+          name="totalMiles"
+          type="number"
+          value={totalMiles}
+          onChange={e => setTotalMiles(e.target.value) }
         >
         </input>
       </label>
@@ -29,10 +38,10 @@ const ConditionsForm = ({pledgeAmount, setPledgeAmount, totalMiles, setTotalMile
       <label>
         End Date:
         <input
-        name="endDate"
-        type="text"
-        value={endDate}
-        onChange={e => setEndDate(e.target.value) }
+          name="endDate"
+          type="text"
+          value={endDate}
+          onChange={e => setEndDate(e.target.value) }
         >
         </input>
       </label>
@@ -40,10 +49,10 @@ const ConditionsForm = ({pledgeAmount, setPledgeAmount, totalMiles, setTotalMile
       <label>
         Days per check-in:
         <input
-        name="daysPerCheck"
-        type="number"
-        value={daysPerCheck}
-        onChange={e => setDaysPerCheck(e.target.value) }
+          name="daysPerCheck"
+          type="number"
+          value={daysPerCheck}
+          onChange={e => setDaysPerCheck(e.target.value) }
         >
         </input>
       </label>
@@ -51,4 +60,4 @@ const ConditionsForm = ({pledgeAmount, setPledgeAmount, totalMiles, setTotalMile
   )
 }
 
-export default ConditionsForm;
+export default ConditionsForm

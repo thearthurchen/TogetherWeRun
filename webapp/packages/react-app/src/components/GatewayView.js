@@ -1,59 +1,71 @@
 import React, { useState } from "react";
 import Modal from "./Modal.js";
-import ConditionsForm from "./ConditionsForm.js";
-import { Button, Image } from '.'
+import { Button } from ".";
 import { ethers } from "ethers";
-import { getMyPact, createPact, setConditions, joinPact } from '../contractFunctions.js';
+import {createPact, fundLink, joinPact} from "../contractFunctions.js";
 
 const GatewayView = ({ provider, setPactAddress, signedInAddress, logo }) => {
-  const [show, setShow] = useState(false);
-  const [pledgeAmount, setPledgeAmount] = useState(1000000);
-  const [endDate, setEndDate] = useState('10/10/22');
-  const [daysPerCheck, setDaysPerCheck] = useState(1);
-  const [totalMiles, setTotalMiles] = useState(40);
+  const [showInviteModal, setShowInviteModal] = useState(false);
+  const [showJoinModal, setJoinModal] = useState(false);
+  const [inviteCode, setInviteCode] = useState("");
 
-  const submitCreatePact = async (provider, pledgeAmount, totalMiles, endDate, daysPerCheck) => {
-    // console.log(pledgeAmount, endDate, daysPerCheck);
-    //TODO: create and set unique invite code
+  const submitCreatePact = async (provider) => {
     try {
-      const pactAddress = await createPact(provider, 'hello');
-      console.log(pactAddress, signedInAddress)
-      await setConditions(provider, pactAddress, pledgeAmount, totalMiles, Date.parse(endDate), daysPerCheck)
+      const pactAddress = await createPact(provider, inviteCode);
       setPactAddress(pactAddress);
-    } catch(e) {
+    } catch (e) {
       console.log(e);
     }
-  }
+  };
 
+  // TODO fix this?
   const handleJoinPact = async (provider, hostAddress, inviteCode) => {
-    const pactAddress = await joinPact(provider, ethers.utils.getAddress('0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266'), 'hello');
+    const pactAddress = await joinPact(
+      provider,
+      ethers.utils.getAddress("0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"),
+      "hello"
+    );
     console.log(pactAddress);
     setPactAddress(pactAddress);
-  }
+  };
 
-  return(
+  return (
     <>
       Gateway
-      <Modal title="Creating Pact" onClose={()=> setShow(false)} show={show} onSubmit={()=> submitCreatePact(provider, pledgeAmount, totalMiles, endDate, daysPerCheck)}>
-        <ConditionsForm
-          pledgeAmount={pledgeAmount} setPledgeAmount={setPledgeAmount}
-          totalMiles={totalMiles} setTotalMiles={setTotalMiles}
-          endDate={endDate} setEndDate={setEndDate}
-          daysPerCheck={daysPerCheck} setDaysPerCheck={setDaysPerCheck}
-        />
+      <Modal
+        title=""
+        onClose={() => setShowInviteModal(false)}
+        show={showInviteModal}
+        onSubmit={() => submitCreatePact(provider)}
+      >
+        <form>
+          <label>
+            Invite code:
+            <input
+              name="inviteCode"
+              type="text"
+              value={inviteCode}
+              onChange={(e) => setInviteCode(e.target.value)}
+            ></input>
+          </label>
+        </form>
       </Modal>
-        <Image src={logo} alt="react-logo" />
-        <Button style={{ marginTop: "8px" }} onClick={() => getMyPact(provider)}>
-          My Pact
-        </Button>
-        <Button style={{ marginTop: "8px" }} onClick={() => setShow(true)}>
-          Create Pact
-        </Button>
-        <Button style={{ marginTop: "8px" }} onClick={() => handleJoinPact(provider, '', 'inviteCode')}>
-          Join Pact
-        </Button>
+      <Button
+        style={{ marginTop: "8px" }}
+        onClick={() => {
+          setShowInviteModal(true);
+        }}
+      >
+        Create Pact
+      </Button>
+      <Button
+        style={{ marginTop: "8px" }}
+        onClick={() => handleJoinPact(provider, "", "inviteCode")}
+      >
+        Join Pact
+      </Button>
     </>
-  )
-}
+  );
+};
 
 export default GatewayView;
