@@ -123,13 +123,16 @@ const createNewUser = async (userAddress, accessCode) => {
   } = response.data;
 
   // create new user
-  await stravaUsers.create({
+  const newUser = new stravaUsers({
     userAddress,
     accessToken: access_token,
     refreshToken: refresh_token,
     userID: "" + id,
     name: `${firstname} ${lastname}`,
   });
+
+  await newUser.save();
+  console.log("Save operation was successful.");
 };
 
 const getStravaDistance = async (user, timestamp) => {
