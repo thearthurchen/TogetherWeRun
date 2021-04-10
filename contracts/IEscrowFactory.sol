@@ -2,5 +2,6 @@
 pragma solidity ^0.6.12;
 
 interface IEscrowFactory {
-    function createEscrow(address newOwner) external returns(address);
+    function getEscrow(address host) external view returns(address);
+    function createEscrow(address host, address pactAddress) external;
 }

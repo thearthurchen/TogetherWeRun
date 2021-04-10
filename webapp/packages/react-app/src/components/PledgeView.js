@@ -1,6 +1,6 @@
-import React from 'react'
-import { StyledTable } from '.'
-import { ethers } from 'ethers'
+import React from "react";
+import { StyledTable } from ".";
+import { ethers } from "ethers";
 
 const PledgeView = ({ pledges }) => {
   return (
@@ -18,11 +18,11 @@ const PledgeView = ({ pledges }) => {
               <td>{key}</td>
               <td>{ethers.utils.formatEther(pledges[key])}</td>
             </tr>
-          )
+          );
         })}
       </tbody>
     </StyledTable>
-  )
-}
+  );
+};
 
-export default PledgeView
+export default PledgeView;

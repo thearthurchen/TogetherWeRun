@@ -22,8 +22,6 @@ contract BetterTogetherGateway is Ownable {
     Counters.Counter private _numOfPacts;
     // Track the originator to their escrow
     mapping (address => uint256) private _addressToPactIndex;
-    // Achieve 1 goal at a time
-    mapping (address => bool) private _host;
 
     IEscrowFactory escrowFactory;
 
@@ -34,7 +32,6 @@ contract BetterTogetherGateway is Ownable {
         Pact dummy = new Pact(
             payable(address(this)),
             msg.sender,
-            address(0),
             "theZeroPact"
         );
         pacts.push(dummy);
@@ -54,13 +51,12 @@ contract BetterTogetherGateway is Ownable {
         // If not finished throw error
         // If finished let them make new pact
         require(_addressToPactIndex[msg.sender] == 0, "You already have a pact!");
-        address escrowAddress = escrowFactory.createEscrow(msg.sender);
         Pact pact = new Pact(
             payable(address(this)),
             msg.sender,
-            escrowAddress,
             inviteCode
         );
+        escrowFactory.createEscrow(msg.sender, address(pact));
         pacts.push(pact);
         // We track w/ gateway just in case the host forgets their Pact address
         _addressToPactIndex[msg.sender] = _numOfPacts.current();
@@ -68,15 +64,23 @@ contract BetterTogetherGateway is Ownable {
         emit PactJoined(msg.sender, address(pact));
     }
 
+    function connectEscrow() external {
+        uint256 pactIndex = _addressToPactIndex[msg.sender];
+        require(pactIndex > 0, "Invalid host or code");
+        Pact pact = pacts[pactIndex];
+        address escrowAddress = escrowFactory.getEscrow(msg.sender);
+        pact.setRefundEscrow(escrowAddress);
+    }
+
     // Join a pact through gateway
     function joinPact(address host, string memory inviteCode) external {
         uint256 pactIndex = _addressToPactIndex[host];
         require(pactIndex > 0, "Invalid host or code");
-//        Pact pact = pacts[pactIndex];
-//        require(_compareStringsByBytes(inviteCode, pact.inviteCode()), "Invalid host or code");
-//        pact.addParticipant(msg.sender);
+        Pact pact = pacts[pactIndex];
+        require(_compareStringsByBytes(inviteCode, pact.inviteCode()), "Invalid host or code");
+        pact.addParticipant(msg.sender);
         _addressToPactIndex[msg.sender] = pactIndex;
-//        emit PactJoined(msg.sender, address(pact));
+        emit PactJoined(msg.sender, address(pact));
     }
 
     // @dev Return the Pact Address after we've created pact
@@ -86,16 +90,4 @@ contract BetterTogetherGateway is Ownable {
         require(pactIndex > 0, "Your friend doesn't want to be better together");
         return address(pacts[pactIndex]);
     }
-
-//    function init() external onlyOwner {
-//        // We want all new contracts from this gateway to start at 1
-//        Pact dummy = new Pact(
-//            payable(address(this)),
-//            msg.sender,
-//            _numOfPacts.current(),
-//            "theZeroPact"
-//        );
-//        pacts.push(dummy);
-//        _numOfPacts.increment();
-//    }
 }

@@ -66,15 +66,12 @@ contract Pact is Ownable, AccessControl, StravaClient, AlarmClient {
     constructor(
         address payable _wallet, // do we want this to be beneficiary?
         address _host,
-        address _escrowAddress,
         string memory _inviteCode
     ) AlarmClient(LINK_KOVAN, ORACLE_KOVAN)
       StravaClient(LINK_KOVAN, ORACLE_KOVAN) public  {
         // Set the params we need for this Pact
         wallet = _wallet;
         host = _host;
-        // We use a refund escrow wallet should actually be the charity
-        escrow = IRefundEscrow(_escrowAddress);
         // TODO We could opt to use the InviteCodeClient if we want VRF
         // Otherwise client passes in the code
         inviteCode = _inviteCode;
@@ -87,14 +84,12 @@ contract Pact is Ownable, AccessControl, StravaClient, AlarmClient {
         participants.push(_host);
     }
 
-    function _compareStringsByBytes(string memory s1, string memory s2) internal pure returns(bool) {
-        return keccak256(abi.encodePacked(s1)) == keccak256(abi.encodePacked(s2));
+    function setRefundEscrow(address _escrowAddress) external onlyOwner {
+        escrow = IRefundEscrow(_escrowAddress);
     }
 
-    function getInviteCode() external returns (string memory) {
-        // Check that the caller is the actual host
-        require(hasRole(HOST_ROLE, msg.sender), "Caller is not a host");
-        return inviteCode;
+    function _compareStringsByBytes(string memory s1, string memory s2) internal pure returns(bool) {
+        return keccak256(abi.encodePacked(s1)) == keccak256(abi.encodePacked(s2));
     }
 
     // @dev setter and getter for conditions
@@ -104,7 +99,7 @@ contract Pact is Ownable, AccessControl, StravaClient, AlarmClient {
         // Check that the caller is the actual host
         require(hasRole(HOST_ROLE, msg.sender), "Caller is not a host");
         // Set the desired conditions
-        minPledge = _minPledge * 10 ** 18;
+        minPledge = _minPledge;
         endDateUtc = _endDateUtc;
         daysPerCheck = _daysPerCheck;
         totalMiles = _totalMiles;

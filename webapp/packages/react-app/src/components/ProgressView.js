@@ -1,5 +1,6 @@
-import React from 'react'
-import { StyledTable } from '.'
+import React from "react";
+import { StyledTable } from ".";
+import { ethers } from "ethers";
 
 const ProgressView = ({ progress }) => {
   return (
@@ -8,22 +9,20 @@ const ProgressView = ({ progress }) => {
         <tr>
           <th>Participant</th>
           <th>Miles</th>
-          <th>Goal</th>
         </tr>
       </thead>
       <tbody>
-        {progress.map((miles, idx) => {
+        {Object.keys(progress).map((key, idx) => {
           return (
-            <tr>
-              <td>{idx + 1}</td>
-              <td>{miles}</td>
-              <td>20</td>
+            <tr key={idx}>
+              <td>{key}</td>
+              <td>{ethers.utils.formatEther(progress[key])}</td>
             </tr>
-          )
+          );
         })}
       </tbody>
     </StyledTable>
-  )
-}
+  );
+};
 
-export default ProgressView
+export default ProgressView;

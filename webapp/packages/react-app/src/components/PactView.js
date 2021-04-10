@@ -15,6 +15,7 @@ import {
   getProgress,
   balanceOfLink,
   fundLink,
+  updateProgress,
 } from "../contractFunctions.js";
 import PledgeView from "./PledgeView";
 
@@ -120,7 +121,7 @@ const PactView = ({ provider, pactAddress, signedInAddress }) => {
         // Check current conditions
         const conditions = await getConditions(provider, pactAddress);
         const currentDate = new Date(conditions.endDateUtc.toNumber());
-        setPledgeAmount(conditions.minPledge);
+        setPledgeAmount(ethers.utils.formatEther(conditions.minPledge));
         setEndDate(currentDate.toLocaleDateString());
         setTotalMiles(conditions.totalMiles);
         setTotalMiles(conditions.totalMiles.toNumber());
@@ -162,7 +163,7 @@ const PactView = ({ provider, pactAddress, signedInAddress }) => {
       await setConditions(
         provider,
         pactAddress,
-        pledgeAmount,
+        ethers.utils.parseEther(pledgeAmount),
         totalMiles,
         Date.parse(endDate),
         daysPerCheck
@@ -197,10 +198,8 @@ const PactView = ({ provider, pactAddress, signedInAddress }) => {
     }, 1000);
   };
 
-  const handleGetProgress = async (provider, pactAddress) => {
-    const progress = await getProgress(provider, pactAddress);
-    console.log(progress);
-    setProgress(progress);
+  const handleUpdateProgress = async (provider, pactAddress) => {
+    await updateProgress(provider, pactAddress);
   };
 
   const handleFundLink = async (provider, pactAddress) => {
@@ -212,8 +211,7 @@ const PactView = ({ provider, pactAddress, signedInAddress }) => {
       <>
         <>Pact is {PACT_STATE[pactState]}</>
         <br />
-        <>Chainlink in the bank - {currentLink}</>
-        <PledgeView pledges={pledges} />
+        {isHost && <>Chainlink in the bank - {currentLink}</>}
       </>
       {pactState === 0 ? (
         <>
@@ -234,6 +232,7 @@ const PactView = ({ provider, pactAddress, signedInAddress }) => {
               setDaysPerCheck={setDaysPerCheck}
             />
           </Modal>
+          <PledgeView pledges={pledges} />
           {isHost ? (
             <>
               <Button
@@ -279,9 +278,9 @@ const PactView = ({ provider, pactAddress, signedInAddress }) => {
           <ProgressView progress={progress} />
           <Button
             style={{ marginTop: "8px" }}
-            onClick={() => handleGetProgress(provider, pactAddress)}
+            onClick={() => handleUpdateProgress(provider, pactAddress)}
           >
-            Get Progress
+            Update Progress
           </Button>
         </>
       ) : null}

@@ -18,7 +18,7 @@ const ConditionsForm = ({
         <input
           name="pledgeAmount"
           type="number"
-          value={ethers.utils.formatEther(pledgeAmount)}
+          value={pledgeAmount}
           onChange={e => setPledgeAmount(e.target.value) }
         >
         </input>

@@ -6,9 +6,17 @@ import '@openzeppelin/contracts/payment/escrow/RefundEscrow.sol';
 
 contract EscrowFactory is Ownable {
 
-    function createEscrow(address newOwner) external onlyOwner returns (address) {
+    mapping (address => address) private _addressToEscrow;
+    event RefundEscrowCreated(address owner);
+
+    function getEscrow(address owner) external view returns (address) {
+        return _addressToEscrow[owner];
+    }
+
+    function createEscrow(address host, address pactAddress) external onlyOwner {
         RefundEscrow escrow = new RefundEscrow(payable(msg.sender));
-        escrow.transferOwnership(newOwner);
-        return address(escrow);
+        escrow.transferOwnership(pactAddress);
+        _addressToEscrow[host] = address(escrow);
+        emit RefundEscrowCreated(host);
     }
 }

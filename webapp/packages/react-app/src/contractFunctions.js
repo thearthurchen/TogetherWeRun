@@ -45,6 +45,28 @@ export async function getMyPact(provider) {
 }
 
 // TODO: Create invite code function to pass in
+async function _createPact(signer, gateway) {
+  return new Promise(async (resolve, reject) => {
+    gateway.on("PactJoined", (host, pactAddress, event) => {
+      console.log(`${host} created pact with pact id: ${pactAddress}`);
+      gateway.removeAllListeners();
+      resolve(pactAddress);
+    });
+  });
+}
+
+async function _connectEscrow(signer, gateway, factory) {
+  return new Promise(async (resolve, reject) => {
+    factory.on("RefundEscrowCreated", async (hostAddress) => {
+      console.log(`Refund escrow created for ${hostAddress}`);
+      if (hostAddress === (await signer.getAddress())) {
+        await gateway.connect(signer).connectEscrow();
+        resolve();
+        factory.removeAllListeners();
+      }
+    });
+  });
+}
 export async function createPact(provider, inviteCode) {
   return new Promise(async (resolve, reject) => {
     const signer = provider.getSigner();
@@ -53,15 +75,19 @@ export async function createPact(provider, inviteCode) {
       abis.BetterTogetherGateway.abi,
       provider
     );
+    const factory = new Contract(
+      addresses.EscrowFactory.address,
+      abis.EscrowFactoryAbi.abi,
+      provider
+    );
     try {
-      gateway.on("PactJoined", (host, pactAddress, event) => {
-        console.log(`${host} created pact with pact id: ${pactAddress}`);
-        console.log(event);
-        gateway.removeAllListeners();
-        resolve(pactAddress);
-      });
-      await gateway.connect(signer).createPact(inviteCode);
-      console.log("Hi");
+      const [address] = await Promise.all([
+        _createPact(signer, gateway),
+        _connectEscrow(signer, gateway, factory),
+        gateway.connect(signer).createPact(inviteCode),
+      ]);
+      console.log(address);
+      resolve(address);
     } catch (e) {
       reject(e);
     }
@@ -177,7 +203,9 @@ export async function makePledge(pledgeAmount, provider, pactAddress) {
         pact.removeAllListeners();
         resolve(value);
       });
-      await pact.connect(signer).makePledge({ value: pledgeAmount });
+      await pact
+        .connect(signer)
+        .makePledge({ value: ethers.utils.parseEther(pledgeAmount) });
     } catch (e) {
       reject(e);
     }
@@ -203,6 +231,16 @@ export async function getProgress(provider, pactAddress) {
       })
     );
     return { progress: progressMap, pledges: pledgeMap };
+  } catch (e) {
+    console.log(e);
+  }
+}
+
+export async function updateProgress(provider, pactAddress) {
+  const pact = new Contract(pactAddress, abis.Pact.abi, provider);
+  const signer = provider.getSigner();
+  try {
+    await pact.connect(signer).updateProgress();
   } catch (e) {
     console.log(e);
   }
