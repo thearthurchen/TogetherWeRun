@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { BrowserRouter, Route } from "react-router-dom";
+import { Button } from "@material-ui/core";
+import { GitHub as GitHubIcon } from "@material-ui/icons";
 import { Section, Header } from "./components";
 import PactView from "./components/PactView.js";
 import GatewayView from "./components/GatewayView.js";
@@ -42,8 +44,13 @@ function App() {
   return (
     <BrowserRouter>
       <Section>
-        <AppBar position="static" style={{ position: "absolute", top: "0" }}>
+        <AppBar position="static" style={{ position: "absolute", top: "0", display: "flex", justifyContent: "space-between" }}>
           <Toolbar>
+            <Button>
+              <a>
+                <GitHubIcon href="https://github.com/thearthurchen/TogetherWeRun"></GitHubIcon>
+              </a>
+            </Button>
             <WalletButton
               provider={provider}
               loadWeb3Modal={loadWeb3Modal}
