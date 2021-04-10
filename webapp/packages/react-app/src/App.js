@@ -27,6 +27,7 @@ function App() {
         setPactAddress(pactAddress);
         console.log("pact", pactAddress);
         console.log("signed", signedInAddress);
+        localStorage.setItem("signedInAddress", signedInAddress);
       } catch (e) {
         // Do nothing because they haven't created/joined pact
         // console.log("use effect error")
