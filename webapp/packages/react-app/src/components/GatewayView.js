@@ -31,7 +31,7 @@ const GatewayView = ({ provider, setPactAddress, signedInAddress, logo }) => {
 
   return (
     <>
-      Gateway
+      <h1>Gateway</h1>
       <Modal
         title=""
         onClose={() => setShowInviteModal(false)}

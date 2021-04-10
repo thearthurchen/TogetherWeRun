@@ -16,3 +16,7 @@ code {
   display: flex;
   justify-content: space-between;
 }
+
+.github-link {
+  color: black;
+}

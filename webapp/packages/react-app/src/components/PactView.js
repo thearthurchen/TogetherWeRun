@@ -214,7 +214,7 @@ const PactView = ({ provider, pactAddress, signedInAddress }) => {
   return (
     <>
       <>
-        <>Pact is {PACT_STATE[pactState]}</>
+        <h1>Pact is {PACT_STATE[pactState]}</h1>
         <br />
         {isHost && <>Chainlink in the bank - {currentLink}</>}
       </>

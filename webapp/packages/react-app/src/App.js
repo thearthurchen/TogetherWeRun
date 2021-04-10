@@ -47,8 +47,8 @@ function App() {
         <AppBar position="static" style={{ position: "absolute", top: "0", display: "flex", justifyContent: "space-between" }}>
           <Toolbar>
             <Button>
-              <a>
-                <GitHubIcon href="https://github.com/thearthurchen/TogetherWeRun"></GitHubIcon>
+              <a className="github-link" href="https://github.com/thearthurchen/TogetherWeRun">
+                <GitHubIcon></GitHubIcon>
               </a>
             </Button>
             <WalletButton
