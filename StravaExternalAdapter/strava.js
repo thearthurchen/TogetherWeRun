@@ -117,7 +117,7 @@ const createNewUser = async (userAddress, accessCode) => {
   }
 
   const {
-    athlete: { username, firstname, id },
+    athlete: { username, firstname, lastname, id },
     refresh_token,
     access_token,
   } = response.data;
@@ -128,6 +128,7 @@ const createNewUser = async (userAddress, accessCode) => {
     accessToken: access_token,
     refreshToken: refresh_token,
     userID: "" + id,
+    name: `${firstname} ${lastname}`,
   });
 };
 
