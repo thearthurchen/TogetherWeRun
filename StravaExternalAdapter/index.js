@@ -39,14 +39,6 @@ const createRequest = async (input, callback) => {
   callback(response.status, Requester.success(jobRunID, response));
 };
 
-const createNewUserRequest = async (accessCode, cb) => {
-  const response = {
-    status: await createNewUser(accessCode)
-  }
-
-  cb(response);
-}
-
 // This is a wrapper to allow the function to work with
 // GCP Functions
 exports.gcpservice = (req, res) => {
@@ -79,5 +71,4 @@ exports.handlerv2 = (event, context, callback) => {
 // or for running in express
 module.exports = {
   createRequest,
-  createNewUserRequest
 };

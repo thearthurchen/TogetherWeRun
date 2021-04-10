@@ -1,38 +1,31 @@
-const { createRequest, createNewUserRequest } = require('./index');
+const { createRequest, createNewUserRequest } = require("./index");
 
-const express = require('express')
-const bodyParser = require('body-parser')
-const app = express()
-const port = process.env.EA_PORT || 8080
+const { createNewUser } = require("./strava");
 
-app.use(bodyParser.json())
+const express = require("express");
+const bodyParser = require("body-parser");
+const app = express();
+const port = process.env.EA_PORT || 8080;
 
-app.use(function (req, res, next) {
-  res.header("Access-Control-Allow-Origin", "*");
-  res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
-  next();
-});
+app.use(bodyParser.json());
 
-app.post('/', (req, res) => {
-  console.log('POST Data: ', req.body)
+app.post("/", (req, res) => {
+  console.log("POST Data: ", req.body);
   createRequest(req.body, (status, result) => {
-    console.log('Result: ', result)
-    res.status(status).json(result)
-  })
-})
-
-app.post('/create-new-user', (req, res) => {
-  const { code: accessCode } = req.body
-  console.log('CREATE NEW USER: ', accessCode)
-  createNewUserRequest(accessCode, (result) => {
-    if (result.status !== 200) {
-      console.log('CREATE NEW USER ERROR: ', result.status || 400)
-      return res.status(result.status || 400).json('create user error');
-    }
-
-    console.log('CREATE NEW USER SUCCESS: ', result.status)
-    return res.status(200).json('create user success');
+    console.log("Result: ", result);
+    res.status(status).json(result);
   });
 });
 
-app.listen(port, () => console.log(`Listening on port ${port}!`))
+app.post("/create-new-user", async (req, res) => {
+  try {
+    const { userAddress, accessCode } = req.body;
+    await createNewUser(userAddress, accessCode);
+    res.json({ message: "good shit" });
+  } catch (err) {
+    console.log(err);
+    res.status(400).json({ message: err });
+  }
+});
+
+app.listen(port, () => console.log(`Listening on port ${port}!`));
