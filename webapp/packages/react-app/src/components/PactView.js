@@ -93,7 +93,6 @@ const PactView = ({ provider, pactAddress, signedInAddress }) => {
         let status;
         if (!hasMadePostCall && Boolean(code)) {
           hasMadePostCall = true;
-          alert("Please wait, attemping Stava authorization.");
           window.history.replaceState({}, document.title, "/");
           status = await getCode(code);
 
