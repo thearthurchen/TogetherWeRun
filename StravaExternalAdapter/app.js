@@ -29,7 +29,7 @@ app.post("/", (req, res) => {
 app.post("/create-new-user", async (req, res) => {
   try {
     const { userAddress, accessCode } = req.body;
-    await createNewUser(userAddress, accessCode);
+    await createNewUser(userAddress.toLowerCase(), accessCode);
     res.json({ message: "good shit" });
   } catch (err) {
     console.log(err);
