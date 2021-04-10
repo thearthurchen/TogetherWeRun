@@ -47,38 +47,41 @@ const PactView = ({ provider, pactAddress, signedInAddress }) => {
   // state 0: pending, 1:started, 2: finished
   const { search } = useLocation();
 
-  const handleOAuth = useCallback(async (code) => {
-    if (!code) {
-      console.log("no access code");
-      return 400;
-    }
-
-    try {
-      console.log("code", code);
-      let userAddress = localStorage.getItem("signedInAddress");
-      if (userAddress === null || userAddress === "") {
-        userAddress = prompt("Input ethereum wallet address:");
+  const handleOAuth = useCallback(
+    async (code) => {
+      if (!code) {
+        console.log("no access code");
+        return 400;
       }
-      console.log("userAddress", userAddress);
-      const response = await axios({
-        url: STRAVA_EA_NEW_USER_URL,
-        method: "post",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        data: {
-          accessCode: code,
-          userAddress,
-        },
-      });
 
-      console.log(response);
-      return response.status;
-    } catch (err) {
-      console.log("bad axios requeset", err);
-      return 400;
-    }
-  }, []);
+      try {
+        // console.log("code", code);
+        // let userAddress = localStorage.getItem("signedInAddress");
+        // if (userAddress === null || userAddress === "") {
+        //   userAddress = prompt("Input ethereum wallet address:");
+        // }
+        // console.log("userAddress", userAddress);
+        const response = await axios({
+          url: STRAVA_EA_NEW_USER_URL,
+          method: "post",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          data: {
+            accessCode: code,
+            userAddress: signedInAddress,
+          },
+        });
+
+        console.log(response);
+        return response.status;
+      } catch (err) {
+        console.log("bad axios requeset", err);
+        return 400;
+      }
+    },
+    [signedInAddress]
+  );
 
   const getCode = useCallback(
     async (code) => {
@@ -98,7 +101,7 @@ const PactView = ({ provider, pactAddress, signedInAddress }) => {
         let status;
         if (!hasMadePostCall && Boolean(code)) {
           hasMadePostCall = true;
-          alert("Please wait, attemping Strava authorization.");
+          alert("Please wait, attempting Strava authorization.");
           window.history.replaceState({}, document.title, "/");
           status = await getCode(code);
 
