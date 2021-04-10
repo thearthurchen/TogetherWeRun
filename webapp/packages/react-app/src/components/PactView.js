@@ -54,6 +54,7 @@ const PactView = ({ provider, pactAddress, signedInAddress }) => {
 
     try {
       console.log("code", code);
+      const userAddress = prompt("Please input your ethereum wallet address:");
       const response = await axios({
         url: STRAVA_EA_NEW_USER_URL,
         method: "post",
@@ -61,7 +62,8 @@ const PactView = ({ provider, pactAddress, signedInAddress }) => {
           "Content-Type": "application/json",
         },
         data: {
-          code,
+          accessCode: code,
+          userAddress,
         },
       });
 
