@@ -68,7 +68,7 @@ function App() {
           </Toolbar>
         </AppBar>
         <>
-          {true ? (
+          {pactAddress ? (
             <PactView
               provider={provider}
               pactAddress={pactAddress}
