@@ -8,6 +8,9 @@ import logo from "./ethereumLogo.png";
 import useWeb3Modal from "./hooks/useWeb3Modal";
 import { getMyPact } from "./contractFunctions.js";
 
+import AppBar from "@material-ui/core/AppBar";
+import Toolbar from "@material-ui/core/Toolbar";
+
 function App() {
   const [
     provider,
@@ -39,16 +42,18 @@ function App() {
   return (
     <BrowserRouter>
       <Section>
-        <Header>
-          <WalletButton
-            provider={provider}
-            loadWeb3Modal={loadWeb3Modal}
-            logoutOfWeb3Modal={logoutOfWeb3Modal}
-            signedInAddress={signedInAddress}
-          />
-        </Header>
+        <AppBar position="static" style={{ position: "absolute", top: "0" }}>
+          <Toolbar>
+            <WalletButton
+              provider={provider}
+              loadWeb3Modal={loadWeb3Modal}
+              logoutOfWeb3Modal={logoutOfWeb3Modal}
+              signedInAddress={signedInAddress}
+            />
+          </Toolbar>
+        </AppBar>
         <>
-          {pactAddress ? (
+          {true ? (
             <PactView
               provider={provider}
               pactAddress={pactAddress}
