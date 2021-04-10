@@ -6,7 +6,10 @@ module.exports = {
     mocha: true
   },
   extends: [
-    'standard'
+    'standard',
+    'prettier',
+    "plugin:prettier/recommended",
+    "eslint-config-prettier"
   ],
   globals: {
     Atomics: 'readonly',

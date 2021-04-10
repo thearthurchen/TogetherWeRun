@@ -10,6 +10,13 @@ task('accounts', 'Prints the list of accounts', async () => {
   })
 })
 
+console.log({
+  url: process.env.KOVAN_RPC_URL,
+  accounts: [process.env.PRIVATE_KEY],
+  saveDeployments: true,
+  allowUnlimitedContractSize: true
+})
+
 // You need to export an object to set up your config
 // Go to https://hardhat.org/config/ to learn more
 
@@ -22,13 +29,16 @@ module.exports = {
     hardhat: {
       chainId: 1337,
       allowUnlimitedContractSize: true,
-      gas: 12000000,
+      gas: 12500000,
       blockGasLimit: 0x1fffffffffffff
     },
     kovan: {
-      url: process.env.KOVAN_RPC_URL || '',
-      accounts: [process.env.PRIVATE_KEY || ''],
-      saveDeployments: true
+      url: process.env.KOVAN_RPC_URL,
+      accounts: [process.env.PRIVATE_KEY],
+      saveDeployments: true,
+      // allowUnlimitedContractSize: true,
+      gas: 12500000,
+      blockGasLimit: 0x1fffffffffffff
     }
   },
   solidity: '0.6.12'

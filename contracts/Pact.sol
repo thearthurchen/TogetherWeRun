@@ -68,9 +68,6 @@ contract Pact is Ownable, AccessControl, StravaClient, AlarmClient {
     uint endDateUtc;
     uint daysPerCheck;
 
-    IERC20 LINK;
-
-
     // @dev borrowed from
     // https://medium.com/@ethdapp/using-the-openzeppelin-escrow-library-6384f22caa99
     // Transfer ownership of the escrow to charity
@@ -269,10 +266,6 @@ contract Pact is Ownable, AccessControl, StravaClient, AlarmClient {
             }
         }
         return true;
-    }
-
-    function fundLink() external {
-        LINK.approve(10 * 10 ** 18);
     }
 
     // This will be called by AlarmClock
