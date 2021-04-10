@@ -42,6 +42,7 @@ const PactView = ({ provider, pactAddress, signedInAddress }) => {
   const [isHost, setIsHost] = useState(false);
   const [progress, setProgress] = useState([]);
   const [initialized, setInitialized] = useState(false);
+  const [currentLink, setCurrentLink] = useState(0.0);
   // state 0: pending, 1:started, 2: finished
   const { search } = useLocation();
 
@@ -82,6 +83,7 @@ const PactView = ({ provider, pactAddress, signedInAddress }) => {
   );
 
   useEffect(() => {
+    console.log(pactAddress);
     // check if pending
     async function setup(provider, pactAddress) {
       try {
@@ -142,6 +144,9 @@ const PactView = ({ provider, pactAddress, signedInAddress }) => {
     if (!initialized) {
       setup(provider, pactAddress);
     }
+    // balanceOfLink(provider, pactAddress).then((amount) =>
+    //   setCurrentLink(amount)
+    // );
   }, [
     pactAddress,
     provider,
@@ -207,7 +212,7 @@ const PactView = ({ provider, pactAddress, signedInAddress }) => {
       <>
         <>Pact is {PACT_STATE[pactState]}</>
         <br />
-        <>Pact LINK funding {balanceOfLink(pactAddress)}</>
+        <>Chainlink in the bank - {currentLink}</>
         <PledgeView pledges={pledges} />
       </>
       {pactState === 0 ? (

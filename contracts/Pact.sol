@@ -2,9 +2,10 @@
 pragma solidity ^0.6.12;
 
 import '@openzeppelin/contracts/access/AccessControl.sol';
-import "@openzeppelin/contracts/utils/Counters.sol";
+//import "@openzeppelin/contracts/utils/Counters.sol";
+import "@openzeppelin/contracts/math/SafeMath.sol";
 import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
-import '@openzeppelin/contracts/payment/escrow/RefundEscrow.sol';
+import './IRefundEscrow.sol';
 import "./alarmClient/AlarmClient.sol";
 import "./stravaClient/StravaClient.sol";
 
@@ -14,8 +15,6 @@ contract Pact is Ownable, AccessControl, StravaClient, AlarmClient {
     // Use SafeMath because its safe
     using SafeMath for uint256;
     using SafeMath for uint64;
-    // Use counter to track all ids
-    using Counters for Counters.Counter;
 
     // Pact can only be Pending, Started, or Finished
     enum PactState { Pending, Started, Finished }
@@ -35,19 +34,17 @@ contract Pact is Ownable, AccessControl, StravaClient, AlarmClient {
     address public host;
     // Mapping of the participants in this Pact
     mapping ( address => bool ) private participantMap;
-    address[] public participants;
+    address[] internal participants;
     // Unique inviteCode for this Pact
     // TODO arthur (make this host only)
     string public inviteCode;
-    // Id of the Pact
-    uint256 public id;
     // The escrow that actually holds the money
-    RefundEscrow escrow;
+    IRefundEscrow escrow;
     // The state of current Pact
     PactState public state;
 
     // Constants
-    uint256 SECONDS_IN_A_DAY = 86400;
+//    uint256 SECONDS_IN_A_DAY = 86400;
     address LINK_KOVAN = 0xa36085F69e2889c224210F603D836748e7dC0088;
     address ORACLE_KOVAN = 0x2f90A6D021db21e1B2A077c5a37B3C7E75D15b7e;
     
@@ -55,15 +52,10 @@ contract Pact is Ownable, AccessControl, StravaClient, AlarmClient {
     mapping ( address => uint256 ) deposits;
 
     // Goal Tracking
-    mapping ( address => mapping ( uint256 => uint256 ) ) timeToProgressIndex;
     mapping ( address => uint256 ) progress;
-    mapping ( address => uint256[] ) progressV2;
-    mapping ( address => Counters.Counter ) indexes;
-    mapping ( bytes32 => address) requestIdToAddress;
-    mapping ( bytes32 => uint256) requestIdToTimestamp;
+    mapping ( bytes32 => address) reqToAdd;
     uint minPledge;
     uint totalMiles;
-    Counters.Counter daysUntilEnd;
     uint startDateUtc;
     uint endDateUtc;
     uint daysPerCheck;
@@ -74,16 +66,15 @@ contract Pact is Ownable, AccessControl, StravaClient, AlarmClient {
     constructor(
         address payable _wallet, // do we want this to be beneficiary?
         address _host,
-        uint256 _id,
+        address _escrowAddress,
         string memory _inviteCode
     ) AlarmClient(LINK_KOVAN, ORACLE_KOVAN)
       StravaClient(LINK_KOVAN, ORACLE_KOVAN) public  {
         // Set the params we need for this Pact
         wallet = _wallet;
         host = _host;
-        id = _id;
         // We use a refund escrow wallet should actually be the charity
-        escrow = new RefundEscrow(wallet);
+        escrow = IRefundEscrow(_escrowAddress);
         // TODO We could opt to use the InviteCodeClient if we want VRF
         // Otherwise client passes in the code
         inviteCode = _inviteCode;
@@ -98,16 +89,6 @@ contract Pact is Ownable, AccessControl, StravaClient, AlarmClient {
 
     function _compareStringsByBytes(string memory s1, string memory s2) internal pure returns(bool) {
         return keccak256(abi.encodePacked(s1)) == keccak256(abi.encodePacked(s2));
-    }
-
-    function _floorToStartOfDay(uint256 timestamp) internal view returns (uint256) {
-        return uint256(timestamp/SECONDS_IN_A_DAY) * SECONDS_IN_A_DAY;
-    }
-
-    function _getDaysBetween(uint256 start, uint256 end) internal view returns (uint256) {
-        require(end > start, "End is before start");
-        uint256 diff  = end - start;
-        return diff / SECONDS_IN_A_DAY;
     }
 
     function getInviteCode() external returns (string memory) {
@@ -205,7 +186,7 @@ contract Pact is Ownable, AccessControl, StravaClient, AlarmClient {
         // TODO Too tired to think about inclusive endDate or not
         // Note: This is probably not ok to access _value directly
         // But I don't want to write my own Counter struct right now
-        daysUntilEnd._value = _getDaysBetween(block.timestamp, endDateUtc);
+//        daysUntilEnd._value = _getDaysBetween(block.timestamp, endDateUtc);
     }
 
     // This would probably call the StravaClient to update the progressV2
@@ -215,42 +196,20 @@ contract Pact is Ownable, AccessControl, StravaClient, AlarmClient {
         require(hasRole(FRIEND_ROLE, msg.sender), "You are not part of the pact");
         // Request Strava Data on behalf of the user
         bytes32 requestId = requestStravaData(msg.sender, uint64(block.timestamp));
-        requestIdToAddress[requestId] = msg.sender;
+        reqToAdd[requestId] = msg.sender;
     }
 
     // ???
-    function _updateProgress(address user, uint256 timestamp, uint256 distance) public onlyOwner {
+    function _updateProgress(address user, uint256 distance) public onlyOwner {
         // Make sure that we're in the Started state
         require(state == PactState.Started, "Pact must be started for any progressV2 updates");
-        // Timestamp cant be 0
-        require(timestamp > 0, "Can't use zero timestamp");
-        // We floor the timestamp to the start of day so that multiple updates
-        // will just update old value
-        // We could also make sure that people don't try to update more than X times a day?
-        uint256 theDay = _floorToStartOfDay(timestamp);
-        // Check if the value exists already in our timeToProgressIndex
-        uint256 index = timeToProgressIndex[user][theDay];
-        // TODO arthur make our tracking more granular to make sure people dont cheat
-        // and run total miles at the end in 1 day
-        // If it does exist (ie. not 0) we simply update with the new distance
-        if (index > 0 ) {
-            progressV2[user][index] = distance;
-        } else {
-            // Add the distance to the progressV2 array
-            progressV2[user].push(distance);
-            // Record which index it is based on timestamp
-            timeToProgressIndex[user][theDay] = indexes[user].current();
-            // Increment the counter
-            indexes[user].increment();
-        }
-        // dumb way to track for now
         progress[user] += distance;
         emit ProgressUpdated(user, progress[user]);
     }
 
     // Override the StravaClient method to call our _updateProgress
     function fulfill(bytes32 requestId, uint256 distance) public override recordChainlinkFulfillment(requestId){
-        _updateProgress(requestIdToAddress[requestId], requestIdToTimestamp[requestId], distance);
+        _updateProgress(reqToAdd[requestId], distance);
     }
 
     function fulfillAlarm(bytes32 requestId) public override recordChainlinkFulfillment(requestId) {

@@ -62,10 +62,8 @@ contract StravaClient is Ownable, ChainlinkClient {
     function requestStravaData(address user, uint timestamp) public returns (bytes32 requestId)
     {
         Chainlink.Request memory req = buildChainlinkRequest(jobId, address(this), this.fulfill.selector);
-
         req.add("user", addressToString(user));
         req.addUint("timestamp", timestamp);
-
         // Sends the request
         return sendChainlinkRequestTo(oracle, req, externalAdapterFee);
     }

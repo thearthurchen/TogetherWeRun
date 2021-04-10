@@ -3,15 +3,15 @@
 // const addresses = {
 //   network: 'Hardhat Network',
 //   BetterTogetherGateway: {
-//     address: '0xa85233C63b9Ee964Add6F2cffe00Fd84eb32338f'
+//     address: '0x4A679253410272dd5232B3Ff7cF5dbB88f295319'
 //   }
 // }
 
 const addresses = {
-  network: 'Kovan Network',
+  network: "Kovan Network",
   BetterTogetherGateway: {
-    address: '0x584597dDb9645b21c43ba9B8ec939FF44D7C321F'
-  }
-}
+    address: "0x48c82ab8717ee70771a1C79e591Ce42567515B65",
+  },
+};
 
-export default addresses
+export default addresses;
