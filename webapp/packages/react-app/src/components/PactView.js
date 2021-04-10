@@ -55,6 +55,11 @@ const PactView = ({ provider, pactAddress, signedInAddress }) => {
 
     try {
       console.log("code", code);
+      let userAddress = localStorage.getItem("signedInAddress");
+      if (userAddress === null || userAddress === "") {
+        userAddress = prompt("Input ethereum wallet address:");
+      }
+      console.log("userAddress", userAddress);
       const response = await axios({
         url: STRAVA_EA_NEW_USER_URL,
         method: "post",
@@ -62,7 +67,8 @@ const PactView = ({ provider, pactAddress, signedInAddress }) => {
           "Content-Type": "application/json",
         },
         data: {
-          code,
+          accessCode: code,
+          userAddress,
         },
       });
 
@@ -92,7 +98,7 @@ const PactView = ({ provider, pactAddress, signedInAddress }) => {
         let status;
         if (!hasMadePostCall && Boolean(code)) {
           hasMadePostCall = true;
-          alert("Please wait, attemping Stava authorization.");
+          alert("Please wait, attemping Strava authorization.");
           window.history.replaceState({}, document.title, "/");
           status = await getCode(code);
 
