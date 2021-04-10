@@ -204,7 +204,9 @@ contract Pact is Ownable, AccessControl, StravaClient, AlarmClient {
 
     // Override the StravaClient method to call our _updateProgress
     function fulfill(bytes32 requestId, uint256 distance) public override recordChainlinkFulfillment(requestId){
-        _updateProgress(reqToAdd[requestId], distance);
+        require(state == PactState.Started, "Pact must be started for any progressV2 updates");
+        progress[user] += distance;
+        emit ProgressUpdated(user, progress[user]);
     }
 
     function fulfillAlarm(bytes32 requestId) public override recordChainlinkFulfillment(requestId) {

@@ -25,8 +25,9 @@ const PACT_STATE = {
   2: "FINISHED",
 };
 
-const STRAVA_URL =
-  "https://www.strava.com/oauth/authorize?client_id=63889&response_type=code&redirect_uri=http://localhost:3000&approval_prompt=force&scope=read,activity:read";
+const redirectUri = "http://localhost:3000";
+const stravaAuthUrl = "https://www.strava.com/oauth/authorize";
+const STRAVA_URL = `${stravaAuthUrl}?client_id=63889&response_type=code&redirect_uri=${redirectUri}&approval_prompt=force&scope=read,activity:read`;
 const STRAVA_EA_NEW_USER_URL = "http://localhost:8080/create-new-user";
 let hasMadePostCall = false;
 
@@ -55,12 +56,6 @@ const PactView = ({ provider, pactAddress, signedInAddress }) => {
       }
 
       try {
-        // console.log("code", code);
-        // let userAddress = localStorage.getItem("signedInAddress");
-        // if (userAddress === null || userAddress === "") {
-        //   userAddress = prompt("Input ethereum wallet address:");
-        // }
-        // console.log("userAddress", userAddress);
         const response = await axios({
           url: STRAVA_EA_NEW_USER_URL,
           method: "post",
@@ -154,9 +149,10 @@ const PactView = ({ provider, pactAddress, signedInAddress }) => {
     if (!initialized) {
       setup(provider, pactAddress);
     }
-    // balanceOfLink(provider, pactAddress).then((amount) =>
-    //   setCurrentLink(amount)
-    // );
+    balanceOfLink(provider, pactAddress).then((amount) => {
+      console.log(amount);
+      setCurrentLink(amount);
+    });
   }, [
     pactAddress,
     provider,

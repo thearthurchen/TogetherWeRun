@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import Modal from "./Modal.js";
 import { Button } from ".";
 import { ethers } from "ethers";
-import {createPact, fundLink, joinPact} from "../contractFunctions.js";
+import { createPact, fundLink, joinPact } from "../contractFunctions.js";
 
 const GatewayView = ({ provider, setPactAddress, signedInAddress, logo }) => {
   const [showInviteModal, setShowInviteModal] = useState(false);
@@ -22,8 +22,8 @@ const GatewayView = ({ provider, setPactAddress, signedInAddress, logo }) => {
   const handleJoinPact = async (provider, hostAddress, inviteCode) => {
     const pactAddress = await joinPact(
       provider,
-      ethers.utils.getAddress("0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"),
-      "hello"
+      ethers.utils.getAddress("0xDBbdbcCeDeEb52Bea5cb0042008458378dB32672"),
+      inviteCode
     );
     console.log(pactAddress);
     setPactAddress(pactAddress);
@@ -60,7 +60,7 @@ const GatewayView = ({ provider, setPactAddress, signedInAddress, logo }) => {
       </Button>
       <Button
         style={{ marginTop: "8px" }}
-        onClick={() => handleJoinPact(provider, "", "inviteCode")}
+        onClick={() => handleJoinPact(provider, "", "abc")}
       >
         Join Pact
       </Button>

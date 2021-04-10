@@ -96,6 +96,8 @@ export async function createPact(provider, inviteCode) {
 
 // It is now from gateway.connect also emits pact address
 export async function joinPact(provider, hostAddress, inviteCode) {
+  console.log(hostAddress);
+  console.log(inviteCode);
   return new Promise(async (resolve, reject) => {
     const gateway = new Contract(
       addresses.BetterTogetherGateway.address,
@@ -110,10 +112,9 @@ export async function joinPact(provider, hostAddress, inviteCode) {
         gateway.removeAllListeners();
         resolve(pactAddress);
       });
-      const tx = await gateway
-        .connect(signer)
-        .joinPact(hostAddress, inviteCode);
+      await gateway.connect(signer).joinPact(hostAddress, inviteCode);
     } catch (e) {
+      console.log(e);
       reject(e);
     }
   });
@@ -240,6 +241,9 @@ export async function updateProgress(provider, pactAddress) {
   const pact = new Contract(pactAddress, abis.Pact.abi, provider);
   const signer = provider.getSigner();
   try {
+    pact.on("ProgressUpdated", (user, progress) => {
+      console.log(user, progress);
+    });
     await pact.connect(signer).updateProgress();
   } catch (e) {
     console.log(e);

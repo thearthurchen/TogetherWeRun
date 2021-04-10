@@ -16,7 +16,7 @@ const ProgressView = ({ progress }) => {
           return (
             <tr key={idx}>
               <td>{key}</td>
-              <td>{ethers.utils.formatEther(progress[key])}</td>
+              <td>{Number(progress[key].toNumber()/16090).toFixed(2)}</td>
             </tr>
           );
         })}
