@@ -1,6 +1,6 @@
 const { createRequest, createNewUserRequest } = require("./index");
 
-const { createNewUser } = require("./strava");
+const { createNewUser, getUser } = require("./strava");
 
 const express = require("express");
 const bodyParser = require("body-parser");
@@ -11,7 +11,10 @@ app.use(bodyParser.json());
 
 app.use(function (req, res, next) {
   res.header("Access-Control-Allow-Origin", "*");
-  res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
+  res.header(
+    "Access-Control-Allow-Headers",
+    "Origin, X-Requested-With, Content-Type, Accept"
+  );
   next();
 });
 
@@ -37,6 +40,17 @@ app.post("/create-new-user", async (req, res) => {
     const { userAddress, accessCode } = req.body;
     await createNewUser(userAddress.toLowerCase(), accessCode);
     res.json({ message: "good shit" });
+  } catch (err) {
+    console.log(err);
+    res.status(400).json({ message: err });
+  }
+});
+
+app.get("/user", async (req, res) => {
+  try {
+    const { userAddress } = req.body;
+    const user = await getUser(userAddress.toLowerCase());
+    res.json({ user });
   } catch (err) {
     console.log(err);
     res.status(400).json({ message: err });

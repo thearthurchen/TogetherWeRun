@@ -43,6 +43,10 @@ const customError = (data) => {
   return false;
 };
 
+const getUser = async (userAddress) => {
+  return stravaUsers.get(userAddress);
+};
+
 const createAthleteActivityRequest = async (accessToken, timestamp) => {
   const todayStart = moment(timestamp).startOf("day").unix();
   const now = moment(timestamp).unix();
@@ -144,4 +148,5 @@ const getStravaDistance = async (user, timestamp) => {
 module.exports = {
   createNewUser,
   getStravaDistance,
+  getUser,
 };
