@@ -13,7 +13,7 @@ Our smart contract allows an individual to construct a fitness goal with friends
 [Insert Live Demo Link]
 
 ### Architecture Diagram
-[Insert Architecture Diagram]
+![image](./Pact.svg)
 
 ## Build and Deployment
 
