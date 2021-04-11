@@ -273,3 +273,13 @@ export async function balanceOfLink(provider, pactAddress) {
   const signer = provider.getSigner();
   return await LINK.connect(signer).balanceOf(pactAddress);
 }
+
+export async function withdrawFromEscrow(provider, pactAddress, signedInAddress) {
+  const pact = new Contract(pactAddress, abis.Pact.abi, provider)
+  const signer = provider.getSigner();
+  try {
+    await pact.withdraw(signedInAddress);
+  } catch (e) {
+    console.log(e);
+  }
+}

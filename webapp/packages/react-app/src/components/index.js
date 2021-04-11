@@ -94,8 +94,8 @@ export const StyledModal = styled.div`
 
   .modal-content {
     width: 500px;
-    background-color: white;
-    color: black;
+    background-color: #3f51b5;
+    color: white;
     border-radius: 8px;
     transform: translateY(-200px);
     transition: all 0.3s ease-in-out;
@@ -108,8 +108,6 @@ export const StyledModal = styled.div`
 
   .modal-body {
     padding: 10px;
-    border-top: 1px solid black;
-    border-bottom: 1px solid black;
   }
 `;
 
@@ -124,7 +122,7 @@ export const StyledTable = styled.table`
   overflow: hidden;
 
   thead tr {
-    background-color: #009879;
+    background-color: #3f51b5;
     color: #ffffff;
     text-align: left;
     font-weight: bold;
@@ -136,13 +134,13 @@ export const StyledTable = styled.table`
   }
 
   tbody tr {
-    background-color: grey;
+    background-color: #6d7fe3;
     border-bottom: 1px solid #dddddd;
   }
 
   tbody tr:nth-of-type(even) {
     background-color: #f3f3f3;
-    color: blue;
+    color: #3f51b5;
   }
 
   tbody tr:last-of-type {
