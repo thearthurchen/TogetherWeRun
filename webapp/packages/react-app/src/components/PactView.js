@@ -292,6 +292,8 @@ const PactView = ({ provider, pactAddress, signedInAddress }) => {
         <>
           <ProgressView progress={progress} />
           <Button
+            color="primary"
+            variant="contained"
             style={{ marginTop: "8px" }}
             onClick={() => handleUpdateProgress(provider, pactAddress)}
           >
