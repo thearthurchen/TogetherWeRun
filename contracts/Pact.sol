@@ -46,7 +46,7 @@ contract Pact is Ownable, AccessControl, StravaClient, AlarmClient {
     // Constants
 //    uint256 SECONDS_IN_A_DAY = 86400;
     address LINK_KOVAN = 0xa36085F69e2889c224210F603D836748e7dC0088;
-    address ORACLE_KOVAN = 0x2f90A6D021db21e1B2A077c5a37B3C7E75D15b7e;
+    address ORACLE_KOVAN = 0xbE944baB39b4bf5517825AF3FC261d9B89D0331D;
     
     // Deposit Tracking
     mapping ( address => uint256 ) deposits;

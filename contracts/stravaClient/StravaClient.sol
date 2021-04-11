@@ -30,28 +30,24 @@ contract StravaClient is Ownable, ChainlinkClient {
         // local node (needs to be running) listen to deployed oracle contract and
         // node configuration job id
         oracle = _oracle;
-        jobId = "414a4cc978d148c3add54a1c0b3534c9";
+        //oracle = 0xbE944baB39b4bf5517825AF3FC261d9B89D0331D;
+        jobId = "aca5d151ec6f4e60b68000ef5fbedb8f";
         externalAdapterFee = 0.1 * 10 ** 18; // 0.1 LINK
     }
 
-    function addressToString(address _address) public pure returns (string memory _uintAsString) {
-        uint _i = uint256(_address);
-        if (_i == 0) {
-            return "0";
+    function addressToString(address _addr) public pure returns(string memory) 
+    {
+        bytes32 value = bytes32(uint256(_addr));
+        bytes memory alphabet = "0123456789abcdef";
+
+        bytes memory str = new bytes(42);
+        str[0] = '0';
+        str[1] = 'x';
+        for (uint256 i = 0; i < 20; i++) {
+            str[2+i*2] = alphabet[uint8(value[i + 12] >> 4)];
+            str[3+i*2] = alphabet[uint8(value[i + 12] & 0x0f)];
         }
-        uint j = _i;
-        uint len;
-        while (j != 0) {
-            len++;
-            j /= 10;
-        }
-        bytes memory bstr = new bytes(len);
-        uint k = len - 1;
-        while (_i != 0) {
-            bstr[k--] = byte(uint8(48 + _i % 10));
-            _i /= 10;
-        }
-        return string(bstr);
+        return string(str);
     }
 
     /**
@@ -62,8 +58,11 @@ contract StravaClient is Ownable, ChainlinkClient {
     function requestStravaData(address user, uint timestamp) public returns (bytes32 requestId)
     {
         Chainlink.Request memory req = buildChainlinkRequest(jobId, address(this), this.fulfill.selector);
+
         req.add("user", addressToString(user));
         req.addUint("timestamp", timestamp);
+
+
         // Sends the request
         return sendChainlinkRequestTo(oracle, req, externalAdapterFee);
     }
