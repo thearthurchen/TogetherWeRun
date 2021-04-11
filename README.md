@@ -7,7 +7,7 @@ The importance of health and fitness has garnered increasing awareness over the 
 Our smart contract allows an individual to construct a fitness goal with friends, all make pledge amounts towards it, and have it automatically return their pledge based on smart contracts. In our demo, we leverage the Ethereum blockchain to lock in a set goal of running with pledged funds, and Chainlink to interface with an external fitness tracker (Strava) to automatically detect completion. If all friends are able to meet the goal within the set timeframe, they will receive their pledged amounts back to their wallets, otherwise it will be donated to a pre-selected charity wallet address.
 
 ### Demo Video
-[Insert Video]
+https://youtu.be/51pUOhqm3fk
 
 ### Live Demo
 https://togethewerun.club/
