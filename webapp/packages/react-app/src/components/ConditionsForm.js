@@ -1,5 +1,6 @@
-import React, { useEffect } from 'react'
-import { ethers } from 'ethers'
+import React, { useEffect } from 'react';
+import { ethers } from 'ethers';
+import { TextField } from '@material-ui/core';
 
 const ConditionsForm = ({
   pledgeAmount,
@@ -13,49 +14,73 @@ const ConditionsForm = ({
 }) => {
   return (
     <form>
-      <label>
-        Amount:
-        <input
-          name="pledgeAmount"
-          type="number"
-          value={pledgeAmount}
-          onChange={e => setPledgeAmount(e.target.value) }
-        >
-        </input>
-      </label>
+      <TextField
+        label="Enter pledge amount"
+        name="pledgeAmount"
+        type="number"
+        variant="filled"
+        InputLabelProps={{
+          style: { color: '#afafb3' }
+        }}
+        inputProps={{
+          style: { color: 'white' }
+        }}
+        fullWidth={true}
+        value={pledgeAmount}
+        onChange={e => setPledgeAmount(e.target.value) }
+      >
+      </TextField>
       <br/>
-      <label>
-        Total Miles:
-        <input
-          name="totalMiles"
-          type="number"
-          value={totalMiles}
-          onChange={e => setTotalMiles(e.target.value) }
-        >
-        </input>
-      </label>
+      <TextField
+        label="Enter total miles"
+        name="totalMiles"
+        type="number"
+        variant="filled"
+        InputLabelProps={{
+          style: { color: '#afafb3' }
+        }}
+        inputProps={{
+          style: { color: 'white' }
+        }}
+        fullWidth={true}
+        value={totalMiles}
+        onChange={e => setTotalMiles(e.target.value) }
+      >
+      </TextField>
       <br/>
-      <label>
-        End Date:
-        <input
-          name="endDate"
-          type="text"
-          value={endDate}
-          onChange={e => setEndDate(e.target.value) }
-        >
-        </input>
-      </label>
+      <TextField
+        label="Enter end date"
+        name="endDate"
+        type="text"
+        variant="filled"
+        InputLabelProps={{
+          style: { color: '#afafb3' }
+        }}
+        inputProps={{
+          style: { color: 'white' }
+        }}
+        fullWidth={true}
+        value={endDate}
+        onChange={e => setEndDate(e.target.value) }
+      >
+      </TextField>
       <br/>
-      <label>
-        Days per check-in:
-        <input
-          name="daysPerCheck"
-          type="number"
-          value={daysPerCheck}
-          onChange={e => setDaysPerCheck(e.target.value) }
-        >
-        </input>
-      </label>
+      <TextField
+        label="Enter days per check"
+        name="daysPerCheck"
+        type="number"
+        variant="filled"
+        InputLabelProps={{
+          style: { color: '#afafb3' }
+        }}
+        inputProps={{
+          style: { color: 'white' }
+        }}
+        fullWidth={true}
+        value={daysPerCheck}
+        onChange={e => setDaysPerCheck(e.target.value) }
+      >
+      </TextField>
     </form>
   )
 }
