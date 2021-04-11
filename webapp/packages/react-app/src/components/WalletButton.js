@@ -1,10 +1,16 @@
 import React from "react";
-import { Button } from ".";
+import { Button } from "@material-ui/core";
 
-
-function WalletButton({ provider, loadWeb3Modal, logoutOfWeb3Modal, signedInAddress }) {
+function WalletButton({
+  provider,
+  loadWeb3Modal,
+  logoutOfWeb3Modal,
+  signedInAddress,
+}) {
   return (
     <Button
+      color="primary"
+      variant="contained"
       onClick={() => {
         if (!provider) {
           loadWeb3Modal();
@@ -13,7 +19,7 @@ function WalletButton({ provider, loadWeb3Modal, logoutOfWeb3Modal, signedInAddr
         }
       }}
     >
-      {!provider ? 'Connect Wallet' : `${signedInAddress} Disconnect Wallet`}
+      {!provider ? "Connect Wallet" : `${signedInAddress} Disconnect Wallet`}
     </Button>
   );
 }

@@ -51,14 +51,14 @@ export const Button = styled.button`
   margin: 0px 20px;
   padding: 12px 24px;
 
-  ${props => props.hidden && "hidden"} :focus {
+  ${(props) => props.hidden && "hidden"} :focus {
     border: none;
     outline: none;
   }
 `;
 
 export const P = styled.p`
-  margin: 0
+  margin: 0;
 `;
 
 export const StyledModal = styled.div`
@@ -101,7 +101,8 @@ export const StyledModal = styled.div`
     transition: all 0.3s ease-in-out;
   }
 
-  .modal-header, .modal-footer {
+  .modal-header,
+  .modal-footer {
     padding: 10px;
   }
 
@@ -146,13 +147,13 @@ export const StyledTable = styled.table`
 
   tbody tr:last-of-type {
     border-bottom: 2px solid #009879;
-}
+  }
 
   tbody tr.active-row {
     font-weight: bold;
     color: #009879;
-}
-`
+  }
+`;
 
 // ${props => props.show && 'opacity: 1;'}
 // ${props => props.show && 'pointer-events: visible;'}

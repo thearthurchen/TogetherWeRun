@@ -7,7 +7,7 @@ const abis = {
   BetterTogetherGateway: BetterTogetherGatewayAbi,
   Pact: PactAbi,
   Link: ChainlinkAbi,
-  EscrowFactoryAbi: EscrowFactoryAbi,
+  EscrowFactoryAbi: EscrowFactoryAbi
 };
 
 export default abis;

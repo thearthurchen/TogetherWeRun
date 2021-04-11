@@ -11,3 +11,12 @@ code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
 }
+
+.MuiToolbar-root {
+  display: flex;
+  justify-content: space-between;
+}
+
+.github-link {
+  color: black;
+}

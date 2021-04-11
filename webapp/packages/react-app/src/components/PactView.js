@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from "react";
+import { Button } from "@material-ui/core";
 import { useLocation } from "react-router-dom";
 import axios from "axios";
-import { Button } from "../components";
 import Modal from "./Modal.js";
 import ConditionsForm from "./ConditionsForm.js";
 import ProgressView from "./ProgressView.js";
@@ -149,10 +149,10 @@ const PactView = ({ provider, pactAddress, signedInAddress }) => {
     if (!initialized) {
       setup(provider, pactAddress);
     }
-    balanceOfLink(provider, pactAddress).then((amount) => {
-      console.log(amount);
-      setCurrentLink(amount);
-    });
+    // balanceOfLink(provider, pactAddress).then((amount) => {
+    //   console.log(amount);
+    //   setCurrentLink(amount);
+    // });
   }, [
     pactAddress,
     provider,
@@ -214,7 +214,7 @@ const PactView = ({ provider, pactAddress, signedInAddress }) => {
   return (
     <>
       <>
-        <>Pact is {PACT_STATE[pactState]}</>
+        <h1>Pact is {PACT_STATE[pactState]}</h1>
         <br />
         {isHost && <>Chainlink in the bank - {currentLink}</>}
       </>
@@ -241,24 +241,32 @@ const PactView = ({ provider, pactAddress, signedInAddress }) => {
           {isHost ? (
             <>
               <Button
+                color="primary"
+                variant="contained"
                 style={{ marginTop: "8px" }}
                 onClick={() => setShow(true)}
               >
                 Change Conditions
               </Button>
               <Button
+                color="primary"
+                variant="contained"
                 style={{ marginTop: "8px" }}
                 onClick={() => handleFundLink(provider, pactAddress)}
               >
                 Fund Link
               </Button>
               <Button
+                color="primary"
+                variant="contained"
                 style={{ marginTop: "8px" }}
                 onClick={() => handleMakePledge(provider, pactAddress)}
               >
                 Make Pledge
               </Button>
               <Button
+                color="primary"
+                variant="contained"
                 style={{ marginTop: "8px" }}
                 onClick={() => handleStartPact(provider, pactAddress)}
               >
@@ -269,6 +277,8 @@ const PactView = ({ provider, pactAddress, signedInAddress }) => {
             <>
               <div>Participant the pact is pending</div>
               <Button
+                color="primary"
+                variant="contained"
                 style={{ marginTop: "8px" }}
                 onClick={() => handleMakePledge(provider, pactAddress)}
               >
@@ -290,8 +300,16 @@ const PactView = ({ provider, pactAddress, signedInAddress }) => {
         </>
       ) : null}
       <>
-        <Button style={{ marginTop: "8px" }}>
-          <a href={STRAVA_URL} target="_self">
+        <Button
+          color="primary"
+          variant="contained"
+          style={{ marginTop: "8px" }}
+        >
+          <a
+            style={{ color: "white", textDecoration: "none" }}
+            href={STRAVA_URL}
+            target="_self"
+          >
             Link Strava
           </a>
         </Button>
