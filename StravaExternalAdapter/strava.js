@@ -2,11 +2,6 @@ const { Requester, Validator } = require("@chainlink/external-adapter");
 const dynamoose = require("dynamoose");
 const moment = require("moment");
 
-const ARTHUR_ETH_ADDRESS = "0xa2d6c4297Eec8a25226AE0dc77344B0BDEBF442a";
-const JASON_ETH_ADDRESS = "0xDBbdbcCeDeEb52Bea5cb0042008458378dB32672";
-const ERIC_ETH_ADDRESS = "0xA3a229C36e715d96472d6B317beBf79251e4F485";
-const TANNER_ETH_ADDRESS = "0xE1fDb74c4c99F5fba0118D90Ac0b63626637d504";
-
 // #region DB setup
 dynamoose.aws.sdk.config.update({
   accessKeyId: process.env.AWS_ACCESS_KEY_ID,
@@ -26,16 +21,6 @@ const stravaUsers = dynamoose.model(
   { create: false }
 );
 
-// // Keep this for creating users
-// const createUser = async () => {
-//   await stravaUsers.update({
-//     userAddress: TANNER_ETH_ADDRESS,
-//     name: "Tanman",
-//   });
-// };
-
-// createUser();
-
 // Define custom error scenarios for the API.
 // Return true for the adapter to retry.
 const customError = (data) => {
@@ -53,10 +38,6 @@ const createAthleteActivityRequest = async (accessToken, timestamp) => {
 
   const config = {
     url: `https://www.strava.com/api/v3/athlete/activities`,
-    // params: {
-    //   before: "1617341344",
-    //   after: "",
-    // },
     headers: {
       accept: "application/json",
       authorization: `Bearer ${accessToken}`,
