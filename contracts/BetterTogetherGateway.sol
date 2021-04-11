@@ -17,6 +17,9 @@ contract BetterTogetherGateway is Ownable {
     // Events to listen to if we so choose to
     event PactJoined(address host, address pact);
 
+    // Pact can only be Pending, Started, or Finished
+    enum PactState { Pending, Started, Finished }
+
     // Track the pacts we have
     Pact[] public pacts;
     Counters.Counter private _numOfPacts;
@@ -47,6 +50,14 @@ contract BetterTogetherGateway is Ownable {
     // Check to make sure they are not currently an originator for being better together movement
     // If they are not hosting we return the invite code for their goal
     function createPact(string memory inviteCode) external {
+//        uint256 pactIndex = _addressToPactIndex[msg.sender];
+//
+//        if (pactIndex != 0) {
+//            Pact pact = pacts[pactIndex];
+//            if (pact.state() != PactState.Finished) {
+//
+//            }
+//        }
         // TODO check if they have a pact and it's not "finished"
         // If not finished throw error
         // If finished let them make new pact

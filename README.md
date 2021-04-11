@@ -10,21 +10,26 @@ Our smart contract allows an individual to construct a fitness goal with friends
 [Insert Video]
 
 ### Live Demo
-[Insert Live Demo Link]
+https://togethewerun.club/
 
 ### Architecture Diagram
-![image](./Pact.png)
+![image](./togethwerun_system.png)
 
 ## Build and Deployment
 
 There are several building block as part of this application included in this repository:
 
 ### Contracts
-The main contracts have two parts, the *BetterTogetherGateway* and *Pact* which are configured to deploy via the hardhat development environment.
+The main contracts have two parts, the *BetterTogetherGateway* and *EscrowFactory* which are configured to deploy via the hardhat development environment.
 
-The *BetterTogetherGateway* is the front facing contract which interacts with various users to create or join existing *Pacts*. It also contains the lists of *Pacts* that are created to keep track of what has been created.
+**Note**: The *EscrowFactory* was created because creating *Escrows* in *Pact* would cause the *BetterTogetherGateway* contract to exceed the maximum contract size.
 
-The *Pact* allows a "Host" user to configure the contract with settings such as the miles to run, the pledge amount required, and the goal deadline timeframe. "Friends" can join this *Pact* via an invite code upon which the "Host" can then start the pact.
+The *BetterTogetherGateway* also acts a *Pact* Factory for users who create pacts. 
+It allows users to create or join existing *Pacts*. 
+It also contains the lists of *Pacts* that are created to keep track of what has been created.
+
+The *Pact* allows a "Host" user to configure the contract with settings such as the miles to run, the pledge amount required, and the goal deadline timeframe. 
+"Friends" can join this *Pact* via an invite code upon which the "Host" can then start the pact.
 
 To deploy the smart contracts, generate an `.env` file with the following in the root folder:
 ```
@@ -46,6 +51,15 @@ The Strava external adapter can be executed via the following, and will be liste
 > yarn install
 > yarn start
 ```
+
+#### DynamoDB
+The EA also contains endpoints to save and retrieve users based on their Ethereum addresses along with their accessTokens.
+
+To persist the data, we are running DynamoDB; therefore, the External Adapter will require the Access Secret Id/Key for DynamoDB.
+
+**Note**: As this is an MVP its not very secure.Anyone who knows the address of a user could get their access code in the current response.
+
+
 ### Web App
 The webapp can be deployed with the following, first making sure that the contract addresses are properly loaded with the front end in `webapp/packages/contracts/src/address.js`. 
 
