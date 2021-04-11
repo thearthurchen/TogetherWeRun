@@ -1,53 +1,111 @@
 import React, { useState } from "react";
-import { Button } from "@material-ui/core";
+import { Button, TextField } from "@material-ui/core";
+import { makeStyles } from '@material-ui/core/styles';
 import Modal from "./Modal.js";
 import { ethers } from "ethers";
 import { createPact, fundLink, joinPact } from "../contractFunctions.js";
 
 const GatewayView = ({ provider, setPactAddress, signedInAddress, logo }) => {
   const [showInviteModal, setShowInviteModal] = useState(false);
-  const [showJoinModal, setJoinModal] = useState(false);
+  const [showJoinModal, setShowJoinModal] = useState(false);
   const [inviteCode, setInviteCode] = useState("");
+  const [hostAddress, setHostAddress] = useState("");
 
   const submitCreatePact = async (provider) => {
     try {
       const pactAddress = await createPact(provider, inviteCode);
       setPactAddress(pactAddress);
+      setShowInviteModal(false);
     } catch (e) {
       console.log(e);
     }
   };
 
-  // TODO fix this?
-  const handleJoinPact = async (provider, hostAddress, inviteCode) => {
+  const submitJoinPact = async (provider, hostAddress, inviteCode) => {
     const pactAddress = await joinPact(
       provider,
-      ethers.utils.getAddress("0xDBbdbcCeDeEb52Bea5cb0042008458378dB32672"),
+      ethers.utils.getAddress(hostAddress),
       inviteCode
     );
     console.log(pactAddress);
     setPactAddress(pactAddress);
+    setShowJoinModal(false);
+  };
+
+  const styles = {
+    root: {
+      background: "black"
+    },
+    input: {
+      color: "#2EFF22"
+    }
   };
 
   return (
     <>
       <h1>Gateway</h1>
       <Modal
-        title=""
+        title="Create Pact"
         onClose={() => setShowInviteModal(false)}
         show={showInviteModal}
         onSubmit={() => submitCreatePact(provider)}
       >
         <form>
-          <label>
-            Invite code:
-            <input
-              name="inviteCode"
-              type="text"
-              value={inviteCode}
-              onChange={(e) => setInviteCode(e.target.value)}
-            ></input>
-          </label>
+          <TextField
+            label="Please enter invite code"
+            name="inviteCode"
+            type="text"
+            variant="filled"
+            InputLabelProps={{
+              style: { color: '#afafb3' }
+            }}
+            inputProps={{
+              style: { color: 'white' }
+            }}
+            fullWidth={true}
+            value={inviteCode}
+            onChange={e => setInviteCode(e.target.value)}
+          />
+        </form>
+      </Modal>
+      <Modal
+        title="Join Pact"
+        onClose={() => setShowJoinModal(false)}
+        show={showJoinModal}
+        onSubmit={() => submitJoinPact(provider)}
+      >
+        <form>
+          <TextField
+            label="Please enter host address"
+            name="hostAddress"
+            type="text"
+            value={hostAddress}
+            variant="filled"
+            InputLabelProps={{
+              style: { color: '#afafb3' }
+            }}
+            inputProps={{
+              style: { color: 'white'}
+            }}
+            fullWidth={true}
+            onChange={(e) => setHostAddress(e.target.value)}
+          />
+          <br/>
+          <TextField
+            label="Please enter invite code"
+            name="inviteCode"
+            type="text"
+            value={inviteCode}
+            variant="filled"
+            InputLabelProps={{
+              style: { color: '#afafb3' }
+            }}
+            inputProps={{
+              style: { color: 'white'}
+            }}
+            fullWidth={true}
+            onChange={(e) => setInviteCode(e.target.value)}
+          />
         </form>
       </Modal>
       <Button
@@ -64,7 +122,9 @@ const GatewayView = ({ provider, setPactAddress, signedInAddress, logo }) => {
         color="primary"
         variant="contained"
         style={{ marginTop: "8px" }}
-        onClick={() => handleJoinPact(provider, "", "abc")}
+        onClick={() => {
+          setShowJoinModal(true);
+        }}
       >
         Join Pact
       </Button>

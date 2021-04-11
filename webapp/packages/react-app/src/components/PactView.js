@@ -16,6 +16,7 @@ import {
   balanceOfLink,
   fundLink,
   updateProgress,
+  withdrawFromEscrow,
 } from "../contractFunctions.js";
 import PledgeView from "./PledgeView";
 
@@ -45,6 +46,7 @@ const PactView = ({ provider, pactAddress, signedInAddress }) => {
   const [progress, setProgress] = useState([]);
   const [initialized, setInitialized] = useState(false);
   const [currentLink, setCurrentLink] = useState(0.0);
+  const [isGoalMet, setIsGoalMet] = useState(false);
   // state 0: pending, 1:started, 2: finished
   const { search } = useLocation();
 
@@ -127,7 +129,6 @@ const PactView = ({ provider, pactAddress, signedInAddress }) => {
         const currentDate = new Date(conditions.endDateUtc.toNumber());
         setPledgeAmount(ethers.utils.formatEther(conditions.minPledge));
         setEndDate(currentDate.toLocaleDateString());
-        setTotalMiles(conditions.totalMiles);
         setTotalMiles(conditions.totalMiles.toNumber());
         setDaysPerCheck(conditions.daysPerCheck.toNumber());
         const res = await getProgress(provider, pactAddress);
@@ -135,6 +136,13 @@ const PactView = ({ provider, pactAddress, signedInAddress }) => {
         setProgress(res.progress);
         setPledges(res.pledges);
 
+        function checkComplete() {
+          for(let participantMiles in progress) {
+            if(participantMiles < totalMiles) return false;
+          }
+          return true;
+        }
+        setIsGoalMet(checkComplete());
         // (minPledge, totalMiles, endDateUtc, daysPerCheck)
         // const [curPledgeAmount, curTotalMiles, curEndDate, curDaysPerCheck] = conditions;
         // console.log("conditions:", curPledgeAmount, curTotalMiles, curEndDate, curDaysPerCheck);
@@ -173,6 +181,7 @@ const PactView = ({ provider, pactAddress, signedInAddress }) => {
         Date.parse(endDate),
         daysPerCheck
       );
+      setShow(false);
     } catch (e) {
       console.log(e);
     }
@@ -209,6 +218,10 @@ const PactView = ({ provider, pactAddress, signedInAddress }) => {
 
   const handleFundLink = async (provider, pactAddress) => {
     await fundLink(provider, pactAddress);
+  };
+
+  const handleWithdraw = async (provider, pactAddress, signedInAddress) => {
+    await withdrawFromEscrow(provider, pactAddress, signedInAddress);
   };
 
   return (
@@ -292,11 +305,32 @@ const PactView = ({ provider, pactAddress, signedInAddress }) => {
         <>
           <ProgressView progress={progress} />
           <Button
+            color="primary"
+            variant="contained"
             style={{ marginTop: "8px" }}
             onClick={() => handleUpdateProgress(provider, pactAddress)}
           >
             Update Progress
           </Button>
+        </>
+      ) : null}
+      {pactState === 2? (
+        <>
+          {isGoalMet ? (
+            <>
+              <Button
+              color="primary"
+              variant="contained"
+              style={{ marginTop: "8px" }}
+              onClick={()=> handleWithdraw(provider, pactAddress, signedInAddress)}
+              >
+                Withdraw Funds
+              </Button>
+            </>
+          ) : (
+            <> Failed
+            </>
+          )}
         </>
       ) : null}
       <>

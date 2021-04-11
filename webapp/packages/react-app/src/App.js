@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Button } from "@material-ui/core";
 import { BrowserRouter, Route } from "react-router-dom";
-import { GitHub as GitHubIcon } from "@material-ui/icons";
+// import { GitHub as GitHubIcon } from "@material-ui/icons";
 import { Section, Header } from "./components";
 import PactView from "./components/PactView.js";
 import GatewayView from "./components/GatewayView.js";
@@ -54,11 +54,11 @@ function App() {
           }}
         >
           <Toolbar>
-            <Button>
+            {/* <Button>
               <a className="github-link" href="https://github.com/thearthurchen/TogetherWeRun">
                 <GitHubIcon></GitHubIcon>
               </a>
-            </Button>
+            </Button> */}
             <WalletButton
               provider={provider}
               loadWeb3Modal={loadWeb3Modal}
@@ -68,7 +68,7 @@ function App() {
           </Toolbar>
         </AppBar>
         <>
-          {pactAddress ? (
+          {true ? (
             <PactView
               provider={provider}
               pactAddress={pactAddress}
